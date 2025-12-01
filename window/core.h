@@ -76,6 +76,11 @@ public:
 	ID3D12RootSignature* rootSignature;
 
 	void init(HWND hwnd, int width, int height) {
+		ID3D12Debug1* debug;
+		D3D12GetDebugInterface(IID_PPV_ARGS(&debug));
+		debug->EnableDebugLayer();
+		debug->Release();
+
 		IDXGIAdapter1* adapterf;
 		std::vector<IDXGIAdapter1*> adapters;
 		IDXGIFactory6* factory = NULL;
