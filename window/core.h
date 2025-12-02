@@ -11,8 +11,7 @@
 
 class Barrier {
 public:
-	static void add(ID3D12Resource* res, D3D12_RESOURCE_STATES first, D3D12_RESOURCE_STATES second,
-		ID3D12GraphicsCommandList4* commandList) {
+	static void add(ID3D12Resource* res, D3D12_RESOURCE_STATES first, D3D12_RESOURCE_STATES second, ID3D12GraphicsCommandList4* commandList) {
 		D3D12_RESOURCE_BARRIER rb = {};
 		rb.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 		rb.Transition.pResource = res;
@@ -75,11 +74,13 @@ public:
 
 	ID3D12RootSignature* rootSignature;
 
-	void init(HWND hwnd, int width, int height) {
-		ID3D12Debug1* debug;
-		D3D12GetDebugInterface(IID_PPV_ARGS(&debug));
-		debug->EnableDebugLayer();
-		debug->Release();
+	void init(HWND hwnd, int width, int height, bool debugMode = false) {
+		if (debugMode) {
+			ID3D12Debug1* debug;
+			D3D12GetDebugInterface(IID_PPV_ARGS(&debug));
+			debug->EnableDebugLayer();
+			debug->Release();
+		}
 
 		IDXGIAdapter1* adapterf;
 		std::vector<IDXGIAdapter1*> adapters;
@@ -255,10 +256,11 @@ public:
 	}
 
 	void beginFrame() {
+		resetCommandList();
 		unsigned int frameIndex = swapchain->GetCurrentBackBufferIndex();
 		graphicsQueueFence[frameIndex].wait();
-		D3D12_CPU_DESCRIPTOR_HANDLE renderTargetViewHandle = backbufferHeap -> GetCPUDescriptorHandleForHeapStart();
-		unsigned int renderTargetViewDescriptorSize = device -> GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+		D3D12_CPU_DESCRIPTOR_HANDLE renderTargetViewHandle = backbufferHeap->GetCPUDescriptorHandleForHeapStart();
+		unsigned int renderTargetViewDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 		renderTargetViewHandle.ptr += frameIndex * renderTargetViewDescriptorSize;
 		Barrier::add(backbuffers[frameIndex], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET, getCommandList());
 		getCommandList()->OMSetRenderTargets(1, &renderTargetViewHandle, FALSE, &dsvHandle);
@@ -311,7 +313,8 @@ public:
 			dst.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
 			dst.SubresourceIndex = 0;
 			getCommandList()->CopyTextureRegion(&dst, 0, 0, 0, &src, NULL);
-		} else {
+		}
+		else {
 			getCommandList()->CopyBufferRegion(dstResource, 0, uploadBuffer, 0, size);
 		}
 		Barrier::add(dstResource, D3D12_RESOURCE_STATE_COPY_DEST, targetState, getCommandList());

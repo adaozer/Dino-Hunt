@@ -357,12 +357,16 @@ public:
 	Matrix projMatrix(float width, float height, float theta, float fov, float f, float n) {
 		Matrix m;
 		float aspect = width / height;
-		m.a[0][0] = 1.f/ (aspect * std::tan((theta * fov * M_PI) / 360));
-		m.a[1][1] = 1.f / (std::tan((theta* fov * M_PI)/ 360));
+		float fovDeg = theta * fov;
+		float fovRad = fovDeg * M_PI / 180.0f;
+		float tanHalf = std::tan(fovRad * 0.5f);
+
+		m.a[0][0] = 1.f/ (aspect * tanHalf);
+		m.a[1][1] = 1.f / tanHalf;
 		m.a[2][2] = f / (f - n);
-		m.a[2][3] = (-f * n) / (f - n);
-		m.a[3][2] = 1;
-		m.a[3][3] = 0;
+		m.a[2][3] = -n * f / (f - n);
+		m.a[3][2] = 1.f;
+		m.a[3][3] = 0.f;
 		return m;
 	}
 

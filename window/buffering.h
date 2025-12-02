@@ -32,8 +32,7 @@ public:
 	std::string name;
 	std::map<std::string, ConstantBufferVariable> constantBufferData;
 
-	void init(Core* core, unsigned int sizeInBytes, unsigned int _maxDrawCalls = 1024)
-	{
+	void init(Core* core, unsigned int sizeInBytes, unsigned int _maxDrawCalls = 1024) {
 		cbSizeInBytes = (sizeInBytes + 255) & ~255;
 		maxDrawCalls = _maxDrawCalls;
 		unsigned int cbSizeInBytesAligned = cbSizeInBytes * maxDrawCalls;
@@ -62,6 +61,7 @@ public:
 		unsigned int offset = offsetIndex * cbSizeInBytes;
 		memcpy(&buffer[offset + cbVariable.offset], data, cbVariable.size);
 	}
+
 
 	D3D12_GPU_VIRTUAL_ADDRESS getGPUAddress() const {
 		return (constantBuffer->GetGPUVirtualAddress() + (offsetIndex * cbSizeInBytes));

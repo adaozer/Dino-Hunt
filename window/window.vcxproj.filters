@@ -27,9 +27,6 @@
     <ClInclude Include="meshes.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="triangle.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="buffering.h">
       <Filter>Source Files</Filter>
     </ClInclude>

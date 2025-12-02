@@ -129,7 +129,6 @@
     <ClInclude Include="maths.h" />
     <ClInclude Include="meshes.h" />
     <ClInclude Include="ShaderManager.h" />
-    <ClInclude Include="triangle.h" />
     <ClInclude Include="window.h" />
   </ItemGroup>
   <ItemGroup>
