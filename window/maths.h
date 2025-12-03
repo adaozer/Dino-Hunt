@@ -313,13 +313,13 @@ public:
 		return m;
 	}
 
-	Matrix translate(Vec3& vec) const {
+	Matrix translate(const Vec3& vec) const {
 		Matrix m;
 		m.a[0][3] = vec.x; m.a[1][3] = vec.y; m.a[2][3] = vec.z;
 		return m;
 	}
 
-	Matrix scale(Vec3& vec) const {
+	Matrix scale(const Vec3& vec) const {
 		Matrix m;
 		m.a[0][0] = vec.x; m.a[1][1] = vec.y; m.a[2][2] = vec.z;
 		return m;

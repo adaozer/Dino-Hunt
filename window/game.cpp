@@ -12,6 +12,7 @@
 #include "GamesEngineeringBase.h"
 #include "GEMLoader.h"
 #include "GEMObject.h"
+#include "AnimatedModel.h"
 
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nCmdShow) {
 	Window win;
@@ -21,8 +22,11 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 	GamesEngineeringBase::Timer tim;
 	ShaderManager shaderManager;
 
-	GEMObject gem(&shaderManager);
-	gem.init(&core, "acacia_003.gem");
+	AnimatedModel am(&shaderManager);
+	am.load(&core, "TRex.gem");
+
+	AnimationInstance animatedInstance;
+	animatedInstance.init(&am.animation, 0);
 
 	float theta = 90.0f;    
 	float fov = 1.0f;
@@ -51,11 +55,13 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 		
 		core.beginFrame();
 		core.beginRenderPass();
-		gem.draw(&core, W, VP);
-
-		Vec3 trans(0.05, 0, 0);
-		W = W.translate(trans);
-		//gem.draw(&core, W, VP);
+		animatedInstance.update("run", dt);
+		if (animatedInstance.animationFinished() == true)
+		{
+			animatedInstance.resetAnimationTime();
+		}
+		shaderManager.updateConstantVS("AnimatedUntextured", "staticMeshBuffer", "VP", &VP);
+		am.draw(&core, &animatedInstance, VP, W);
 		core.finishFrame();
 	}
 	core.flushGraphicsQueue();

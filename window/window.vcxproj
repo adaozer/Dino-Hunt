@@ -124,6 +124,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AnimatedModel.h" />
+    <ClInclude Include="Animation.h" />
     <ClInclude Include="Barrier.h" />
     <ClInclude Include="ConstantBuffer.h" />
     <ClInclude Include="core.h" />
