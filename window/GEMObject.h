@@ -40,7 +40,7 @@ public:
 	Shader* pixelShader = nullptr;
 	StaticMesh sm;
 
-	GEMObject(ShaderManager* sm) : shaderManager(sm) {}
+	GEMObject(ShaderManager* shadermanager) : shaderManager(shadermanager) {}
 
 	void init(Core* core, std::string filename) {
 		sm.load(core, filename);
