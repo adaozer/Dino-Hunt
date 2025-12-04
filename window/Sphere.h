@@ -59,7 +59,6 @@ public:
 	}
 
 	void draw(Core* core, Matrix& W, Matrix& VP) {
-		core->beginRenderPass();
 		psos.bind(core, "Sphere");
 
 		shaderManager->updateConstantVS("vertexshader.hlsl", "staticMeshBuffer", "W", &W);

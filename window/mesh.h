@@ -18,7 +18,6 @@ struct STATIC_VERTEX
 	float tv;
 };
 
-
 struct ANIMATED_VERTEX
 {
 	Vec3 pos;

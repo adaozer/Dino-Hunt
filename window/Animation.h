@@ -1,5 +1,6 @@
 #pragma once
 #include "mesh.h"
+#include "maths.h"
 
 struct Bone
 {
@@ -11,6 +12,7 @@ struct Skeleton
 {
 	std::vector<Bone> bones;
 	Matrix globalInverse;
+
 };
 
 struct AnimationFrame
@@ -29,8 +31,9 @@ public:
 	Vec3 interpolate(Vec3 p1, Vec3 p2, float t) {
 		return ((p1 * (1.0f - t)) + (p2 * t));
 	}
-	Quaternion interpolate(Quaternion q1, Quaternion q2, float t) {
-		return q1.slerp(q2, t);
+	Quaternion interpolate(Quaternion q1, Quaternion q2, float t)
+	{
+		return Quaternion::slerp(q1, q2, t);
 	}
 	float duration() {
 		return ((float)frames.size() / ticksPerSecond);
@@ -43,26 +46,20 @@ public:
 		interpolationFact = interpolationFact - (float)frame;
 		frame = std::min(frame, (int)frames.size() - 1);
 	}
-
 	int nextFrame(int frame)
 	{
 		return std::min(frame + 1, (int)frames.size() - 1);
 	}
 
-	Matrix interpolateBoneToGlobal(Matrix* matrices, int baseFrame, float interpolationFact,
-		Skeleton* skeleton, int boneIndex)
+	Matrix interpolateBoneToGlobal(Matrix* matrices, int baseFrame, float interpolationFact, Skeleton* skeleton, int boneIndex)
 	{
-		Matrix scale = Matrix().scale(Vec3(interpolate(frames[baseFrame].scales[boneIndex], frames[nextFrame(baseFrame)].scales[boneIndex], interpolationFact)));
-
-		Matrix rotation = interpolate(frames[baseFrame].rotations[boneIndex],
-			frames[nextFrame(baseFrame)].rotations[boneIndex], interpolationFact).toMatrix();
-
-		Matrix translation = Matrix().translate(Vec3(interpolate(frames[baseFrame].positions[boneIndex], frames[nextFrame(baseFrame)].positions[boneIndex], interpolationFact)));
-
-		Matrix local = rotation * translation * scale;
-
-		if (skeleton->bones[boneIndex].parentIndex > -1) {
-			Matrix global = matrices[skeleton->bones[boneIndex].parentIndex] * local;
+		Matrix scale = Matrix::scaling(interpolate(frames[baseFrame].scales[boneIndex], frames[nextFrame(baseFrame)].scales[boneIndex], interpolationFact));
+		Matrix rotation = interpolate(frames[baseFrame].rotations[boneIndex], frames[nextFrame(baseFrame)].rotations[boneIndex], interpolationFact).toMatrix();
+		Matrix translation = Matrix::translation(interpolate(frames[baseFrame].positions[boneIndex], frames[nextFrame(baseFrame)].positions[boneIndex], interpolationFact));
+		Matrix local = scale * rotation * translation;
+		if (skeleton->bones[boneIndex].parentIndex > -1)
+		{
+			Matrix global = local * matrices[skeleton->bones[boneIndex].parentIndex];
 			return global;
 		}
 		return local;
@@ -88,11 +85,11 @@ public:
 			interpolationFact, &skeleton, boneIndex);
 	}
 
-	void calcFinalTransforms(Matrix* matrices)
+	void calcFinalTransforms(Matrix* matrices, Matrix coordTransform)
 	{
 		for (int i = 0; i < bonesSize(); i++)
 		{
-			matrices[i] = matrices[i] * skeleton.bones[i].offset * skeleton.globalInverse;
+			matrices[i] = skeleton.bones[i].offset * matrices[i] * skeleton.globalInverse * coordTransform;
 		}
 	}
 };
@@ -104,6 +101,7 @@ public:
 	std::string currentAnimation;
 	float t;
 	Matrix matrices[256];
+	Matrix matricesPose[256];
 	Matrix coordTransform;
 
 	void init(Animation* _animation, int fromYZX)
@@ -118,6 +116,7 @@ public:
 			coordTransform.a[3][3] = 1.0f;
 		}
 	}
+
 	void resetAnimationTime()
 	{
 		t = 0;
@@ -146,6 +145,6 @@ public:
 		{
 			matrices[i] = animation->interpolateBoneToGlobal(name, matrices, frame, interpolationFact, i);
 		}
-		animation->calcFinalTransforms(matrices);
+		animation->calcFinalTransforms(matrices, coordTransform);
 	}
 };

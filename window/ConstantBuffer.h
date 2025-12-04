@@ -1,7 +1,7 @@
 #pragma once
 
 #include "core.h"
-#include "maths.h"
+#include "Maths.h"
 #include <map>
 
 struct alignas(16) ConstantBuffer1 {
@@ -13,7 +13,7 @@ struct alignas(16) ConstantBuffer2
 	float time;
 	float padding[3];
 	Vec4 lights[4];
-};
+}; 
 
 struct ConstantBufferVariable
 {

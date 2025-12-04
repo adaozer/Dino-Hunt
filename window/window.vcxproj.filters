@@ -21,7 +21,7 @@
     <ClInclude Include="core.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="maths.h">
+    <ClInclude Include="maths1.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="mesh.h">
@@ -50,6 +50,12 @@
     </ClInclude>
     <ClInclude Include="GEMObject.h">
       <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimatedModel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Animation.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

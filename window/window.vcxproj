@@ -132,7 +132,7 @@
     <ClInclude Include="Cube.h" />
     <ClInclude Include="Fence.h" />
     <ClInclude Include="GEMObject.h" />
-    <ClInclude Include="maths.h" />
+    <ClInclude Include="maths1.h" />
     <ClInclude Include="mesh.h" />
     <ClInclude Include="Plane.h" />
     <ClInclude Include="ShaderManager.h" />
