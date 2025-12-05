@@ -22,8 +22,14 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 	GamesEngineeringBase::Timer tim;
 	ShaderManager shaderManager;
 
+	Cube cube(&shaderManager);
+	cube.init(&core);
+
 	AnimatedModel am(&shaderManager);
 	am.load(&core, "TRex.gem");
+
+	GEMObject gem(&shaderManager);
+	gem.init(&core, "acacia_003.gem");
 
 	AnimationInstance animatedInstance;
 	animatedInstance.init(&am.animation, 0);
@@ -50,17 +56,20 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 		Matrix v = Matrix::lookAt(Vec3(0, 0, 0), from, Vec3(0, 1, 0));
 		Matrix vp = v * p;
 		Matrix W;
-		W = Matrix::scale(Vec3(0.01f, 0.01f, 0.01f));
-
 		core.beginRenderPass();
 
+		cube.draw(&core, W, vp);
 		animatedInstance.update("run", dt);
 		if (animatedInstance.animationFinished() == true)
 		{
 			animatedInstance.resetAnimationTime();
 		}
+		W = Matrix::scale(Vec3(0.01f, 0.01f, 0.01f)) * Matrix::translate(Vec3(5,0,0));
 
-		am.draw(&core, &animatedInstance, vp, W);
+		am.draw(&core, &animatedInstance, W, vp);
+
+		W = Matrix::scale(Vec3(0.01f, 0.01f, 0.01f)) * Matrix::translate(Vec3(10, 0, 0));
+		gem.draw(&core, W, vp);
 		core.finishFrame();
 	}
 	core.flushGraphicsQueue();

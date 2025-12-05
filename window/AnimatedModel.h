@@ -33,7 +33,7 @@ public:
 			mesh->init(core, vertices, gemmeshes[i].indices);
 			meshes.push_back(mesh);
 		}
-		vertexShader = shaderManager->loadShader(core, "vertexshader.hlsl", true);
+		vertexShader = shaderManager->loadShader(core, "vertexshader_animated.hlsl", true);
 		pixelShader = shaderManager->loadShader(core, "pixelshader.hlsl", false);
 		psos.createPSO(core, "AnimatedModel", vertexShader->shader, pixelShader->shader, vertexLayoutCache.getAnimatedLayout());
 		memcpy(&animation.skeleton.globalInverse, &gemanimation.globalInverse, 16 * sizeof(float));
@@ -72,12 +72,12 @@ public:
 		
 	}
 
-	void draw(Core* core, AnimationInstance* instance, Matrix& vp, Matrix& w)
+	void draw(Core* core, AnimationInstance* instance, Matrix& W, Matrix& VP)
 	{
 		psos.bind(core, "AnimatedModel");
-		shaderManager->updateConstantVS("vertexshader.hlsl", "staticMeshBuffer", "W", &w);
-		shaderManager->updateConstantVS("vertexshader.hlsl", "staticMeshBuffer", "VP", &vp);
-		shaderManager->updateConstantVS("vertexshader.hlsl", "staticMeshBuffer", "bones", instance->matrices);
+		shaderManager->updateConstantVS("vertexshader_animated.hlsl", "staticMeshBuffer", "W", &W);
+		shaderManager->updateConstantVS("vertexshader_animated.hlsl", "staticMeshBuffer", "VP", &VP);
+		shaderManager->updateConstantVS("vertexshader_animated.hlsl", "staticMeshBuffer", "bones", instance->matrices);
 
 		vertexShader->apply(core);
 		for (int i = 0; i < meshes.size(); i++)
