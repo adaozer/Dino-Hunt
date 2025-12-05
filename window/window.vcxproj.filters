@@ -21,7 +21,7 @@
     <ClInclude Include="core.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="maths1.h">
+    <ClInclude Include="maths.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="mesh.h">

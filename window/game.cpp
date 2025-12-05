@@ -27,13 +27,11 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 
 	AnimationInstance animatedInstance;
 	animatedInstance.init(&am.animation, 0);
-	/*
-	float theta = 90.0f;    
-	float fov = 1.0f;
-	float nearZ = 0.01f;
-	float farZ = 100000.f;
 
-	Matrix proj = Matrix().projMatrix((float)win.width, (float)win.height, theta, fov, farZ, nearZ); */
+	float fov = 90.0f;    
+	float n = 0.01f;
+	float f = 100000.f;
+	float aspect = win.width / win.height;
 
 	float time = 0.f;
 
@@ -46,22 +44,13 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 		if (win.keys[VK_ESCAPE] == 1) break;
 
 		time += dt;
-
-		/* Vec3 from = Vec3(11 * cos(time), 5, 11 * sinf(time));
-		Vec3 to = Vec3(0, 0, 0);
-		Matrix v = Matrix().lookAt(to, from, Vec3(0, 1, 0));
-
-		Matrix VP = proj.mul(v);
-		Matrix W;
-		Vec3 scaler(0.01f, 0.01f, 0.01f);
-		W = W.scale(scaler); */
 		
-		Matrix vp;
-		Matrix p = Matrix::perspective(0.01f, 10000.0f, 1920.0f / 1080.0f, 60.0f);
+		Matrix p = Matrix::projMatrix(aspect, fov, f, n);
 		Vec3 from = Vec3(11 * cos(time), 5, 11 * sinf(time));
-		Matrix v = Matrix::lookAt(from, Vec3(0, 0, 0), Vec3(0, 1, 0));
-		vp = v * p;
+		Matrix v = Matrix::lookAt(Vec3(0, 0, 0), from, Vec3(0, 1, 0));
+		Matrix vp = v * p;
 		Matrix W;
+		W = Matrix::scale(Vec3(0.01f, 0.01f, 0.01f));
 
 		core.beginRenderPass();
 
@@ -70,8 +59,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 		{
 			animatedInstance.resetAnimationTime();
 		}
-		shaderManager.updateConstantVS("vertexshader.hlsl", "staticMeshBuffer", "VP", &vp);
-		W = Matrix::scaling(Vec3(0.01f, 0.01f, 0.01f));
+
 		am.draw(&core, &animatedInstance, vp, W);
 		core.finishFrame();
 	}

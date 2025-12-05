@@ -72,10 +72,6 @@ public:
 		
 	}
 
-	void updateWorld(Matrix& w) {
-		shaderManager->updateConstantVS("vertexshader.hlsl", "staticMeshBuffer", "W", &w);
-	}
-
 	void draw(Core* core, AnimationInstance* instance, Matrix& vp, Matrix& w)
 	{
 		psos.bind(core, "AnimatedModel");
