@@ -15,25 +15,8 @@
 #include "AnimatedModel.h"
 #include "Camera.h"
 
-void InitDebugConsole()
-{
-	AllocConsole();
-	FILE* f;
-
-	// Redirect stdout to the new console
-	freopen_s(&f, "CONOUT$", "w", stdout);
-	freopen_s(&f, "CONOUT$", "w", stderr);
-
-	std::ios::sync_with_stdio(); // keep iostreams in sync with C stdio
-
-	std::cout.clear();
-	std::cerr.clear();
-
-	std::cout << "Debug console initialised.\n";
-}
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nCmdShow) {
 	Window win;
-	InitDebugConsole();
 	Core core;
 	win.init(1024, 1024, 0, 0, "My Window");
 	core.init(win.hwnd, win.width, win.height);
@@ -42,15 +25,24 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 
 	AnimatedModel am(&shaderManager);
 	am.load(&core, "models/TRex.gem");
-	auto& seq = am.animation.animations["run"]; // or whatever the key is
-	std::cout << "Uzi frames: " << seq.frames.size()
-		<< "  tps: " << seq.ticksPerSecond << std::endl;
 
 	GEMObject gem(&shaderManager);
-	gem.init(&core, "models/bamboo.gem");
+	gem.init(&core, "models/water_tower_004.gem");
+
+	AnimatedModel am1(&shaderManager);
+	am1.load(&core, "models/Sheep-03.gem");
+
+	AnimationInstance animatedInstance1;
+	animatedInstance1.init(&am1.animation, 0);
 
 	AnimationInstance animatedInstance;
 	animatedInstance.init(&am.animation, 0);
+
+	AnimatedModel am2(&shaderManager);
+	am2.load(&core, "models/Cat-Siamese.gem");
+
+	AnimationInstance animatedInstance2;
+	animatedInstance2.init(&am2.animation, 0);
 
 	float fov = 90.0f;    
 	float n = 0.01f;
@@ -58,7 +50,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 	float aspect = win.width / win.height;
 	Matrix p = Matrix::projMatrix(aspect, fov, f, n);
 
-	Camera cam;
+	Camera cam(Vec3(0,3,10));
 	float time = 0.f;
 
 	while (true) {
@@ -72,7 +64,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 		time += dt;
 		cam.yaw += win.dx * cam.sensitivity;
 		cam.pitch += win.dy * cam.sensitivity;
-		const float limit = 1.55;
+		float limit = 2.55;
 		if (cam.pitch > limit) cam.pitch = limit;
 		if (cam.pitch < -limit) cam.pitch = -limit;
 
@@ -94,21 +86,30 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 		}
 
 		Matrix v = cam.viewMatrix();
-		//Vec3 from = Vec3(11 * cos(time), 5, 11 * sinf(time));
-		//Matrix v = Matrix::lookAt(Vec3(0, 0, 0), from, Vec3(0, 1, 0));
 		Matrix vp = v * p;
 		Matrix W;
 		core.beginRenderPass();
 
 		animatedInstance.update("run", dt);
-		if (animatedInstance.animationFinished() == true) animatedInstance.resetAnimationTime();
-		
-		W = Matrix::scale(Vec3(0.01f, 0.01f, 0.01f));
+		animatedInstance1.update("death", dt);
+		animatedInstance2.update("attack02", dt);
 
+		if (animatedInstance1.animationFinished() == true) animatedInstance1.resetAnimationTime();
+		if (animatedInstance.animationFinished() == true) animatedInstance.resetAnimationTime();
+		if (animatedInstance2.animationFinished() == true) animatedInstance.resetAnimationTime();
+
+		W = Matrix::scale(Vec3(0.01f, 0.01f, 0.01f));
 		am.draw(&core, &animatedInstance, W, vp);
 
 		W = Matrix::scale(Vec3(0.01f, 0.01f, 0.01f)) * Matrix::translate(Vec3(5, 0, 0));
+		am1.draw(&core, &animatedInstance1, W, vp);
+
+		W = Matrix::scale(Vec3(0.01f, 0.01f, 0.01f)) * Matrix::translate(Vec3(10, 0, 0));
 		gem.draw(&core, W, vp);
+
+		W = Matrix::scale(Vec3(0.01f, 0.01f, 0.01f)) * Matrix::translate(Vec3(15, 0, 0));
+		am2.draw(&core, &animatedInstance2, W, vp);
+
 		core.finishFrame();
 	}
 	core.flushGraphicsQueue();
