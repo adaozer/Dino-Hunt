@@ -14,31 +14,16 @@
 #include "GEMObject.h"
 #include "AnimatedModel.h"
 #include "Camera.h"
+#include "Texture.h"
 
 void listAnimationNames(const GEMLoader::GEMAnimation& gemanimation)
 {
 	for (int i = 0; i < gemanimation.animations.size(); i++)
 	{
-		std::cout << gemanimation.animations[i].name << std::endl;
+		printf((gemanimation.animations[i].name).c_str(), "\n");
 	}
 }
 
-void InitDebugConsole()
-{
-	AllocConsole();
-	FILE* f;
-
-	// Redirect stdout to the new console
-	freopen_s(&f, "CONOUT$", "w", stdout);
-	freopen_s(&f, "CONOUT$", "w", stderr);
-
-	std::ios::sync_with_stdio(); // keep iostreams in sync with C stdio
-
-	std::cout.clear();
-	std::cerr.clear();
-
-	std::cout << "Debug console initialised.\n";
-}
 
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nCmdShow) {
 	Window win;
@@ -47,31 +32,35 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 	core.init(win.hwnd, win.width, win.height);
 	GamesEngineeringBase::Timer tim;
 	ShaderManager shaderManager;
-	InitDebugConsole();
+	Texture tex;
 
-	AnimatedModel am(&shaderManager);
+	AllocConsole();
+	FILE* stream;
+	freopen_s(&stream, "CONOUT$", "w", stdout);
+
+	AnimatedModel am(&shaderManager, tex, "textures/T-rex_Base_Color_alb.png");
 	am.load(&core, "models/TRex.gem");
-
-	GEMObject gem(&shaderManager);
-	gem.init(&core, "models/water_tower_004.gem");
-
-	AnimatedModel am1(&shaderManager);
-	am1.load(&core, "models/Sheep-03.gem");
-
-	AnimationInstance animatedInstance1;
-	animatedInstance1.init(&am1.animation, 0);
 
 	AnimationInstance animatedInstance;
 	animatedInstance.init(&am.animation, 0);
 
-	AnimatedModel am2(&shaderManager);
+	GEMObject gem(&shaderManager, tex, "textures/bamboo branch_ALB.png");
+	gem.init(&core, "models/bamboo.gem");
+
+	AnimatedModel am1(&shaderManager, tex, "textures/MaleDuty_1_OBJ_Serious_Packed0_Diffuse_alb.png");
+	am1.load(&core, "models/Soldier1.gem");
+
+	AnimationInstance animatedInstance1;
+	animatedInstance1.init(&am1.animation, 0);
+
+	AnimatedModel am2(&shaderManager, tex, "textures/AC5_Albedo_alb.png");
 	am2.load(&core, "models/AutomaticCarbine.gem");
 
 	listAnimationNames(am2.anim);
 
 	AnimationInstance animatedInstance2;
 	animatedInstance2.init(&am2.animation, 0);
-
+	
 	float fov = 90.0f;    
 	float n = 0.01f;
 	float f = 100000.f;
@@ -118,24 +107,26 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 		core.beginRenderPass();
 
 		animatedInstance.update("run", dt);
-		animatedInstance1.update("death", dt);
-		animatedInstance2.update("18 empty reload", dt);
+		animatedInstance1.update("firing rifle", dt);
+		animatedInstance2.update("08 fire", dt);
 
 		if (animatedInstance1.animationFinished() == true) animatedInstance1.resetAnimationTime();
 		if (animatedInstance.animationFinished() == true) animatedInstance.resetAnimationTime();
-		if (animatedInstance2.animationFinished() == true) animatedInstance.resetAnimationTime();
-
+		if (animatedInstance2.animationFinished() == true) animatedInstance2.resetAnimationTime();
+		
 		W = Matrix::scale(Vec3(0.01f, 0.01f, 0.01f));
 		am.draw(&core, &animatedInstance, W, vp);
 
 		W = Matrix::scale(Vec3(0.01f, 0.01f, 0.01f)) * Matrix::translate(Vec3(5, 0, 0));
 		am1.draw(&core, &animatedInstance1, W, vp);
 
+		//W = Matrix::scale(Vec3(0.02f, 0.02f, 0.02f)) * Matrix::translate(Vec3(5.2, 0.55, -0.15));
+		W = Matrix::scale(Vec3(0.01f, 0.01f, 0.01f)) * Matrix::translate(Vec3(15, 0, 0));
+		am2.draw(&core, &animatedInstance2, W, vp);
+
 		W = Matrix::scale(Vec3(0.01f, 0.01f, 0.01f)) * Matrix::translate(Vec3(10, 0, 0));
 		gem.draw(&core, W, vp);
 
-		W = Matrix::scale(Vec3(0.01f, 0.01f, 0.01f)) * Matrix::translate(Vec3(15, 0, 0));
-		am2.draw(&core, &animatedInstance2, W, vp);
 
 		core.finishFrame();
 	}

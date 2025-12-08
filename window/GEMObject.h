@@ -1,6 +1,7 @@
 #pragma once
 #include "GEMLoader.h"
 #include "mesh.h"
+#include "Texture.h"
 
 class StaticMesh {
 public:
@@ -23,8 +24,9 @@ public:
 		}
 	}
 
-	void draw(Core* core) {
+	void draw(Core* core, std::string filepath, Texture texture, ShaderManager* shaderManager) {
 		for (int i = 0; i < meshes.size(); i++) {
+			shaderManager->updateTexturePS(core, filepath, texture.heapOffset);
 			meshes[i]->draw(core);
 		}
 	}
@@ -39,13 +41,16 @@ public:
 	Shader* vertexShader = nullptr;
 	Shader* pixelShader = nullptr;
 	StaticMesh sm;
+	Texture texture;
+	std::string filepath;
 
-	GEMObject(ShaderManager* shadermanager) : shaderManager(shadermanager) {}
+	GEMObject(ShaderManager* shadermanager, Texture tx, std::string _filepath) : shaderManager(shadermanager), texture(tx), filepath(_filepath) {}
 
 	void init(Core* core, std::string filename) {
 		sm.load(core, filename);
 		vertexShader = shaderManager->loadShader(core, "vertexshader.hlsl", true);
-		pixelShader = shaderManager->loadShader(core, "pixelshader.hlsl", false);
+		pixelShader = shaderManager->loadShader(core, "pixelshader_textured.hlsl", false);
+		texture.load(core, filepath);
 		psos.createPSO(core, "GEMObject", vertexShader->shader, pixelShader->shader, vertexLayoutCache.getStaticLayout());
 	}
 
@@ -54,6 +59,6 @@ public:
 		shaderManager->updateConstantVS("vertexshader.hlsl", "staticMeshBuffer", "W", &W);
 		shaderManager->updateConstantVS("vertexshader.hlsl", "staticMeshBuffer", "VP", &VP);
 		vertexShader->apply(core);
-		sm.draw(core);
+		sm.draw(core, filepath, texture, shaderManager);
 	}
 };

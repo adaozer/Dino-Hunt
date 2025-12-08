@@ -24,6 +24,7 @@ public:
 class ShaderManager {
 public:
 	std::unordered_map<std::string, Shader> shaders;
+	std::map<std::string, int> textureBindPoints;
 
 	void reflect(Core* core, ID3DBlob* shader, ConstantBuffer* buffer) {
 		ID3D12ShaderReflection* reflection;
@@ -47,7 +48,13 @@ public:
 			buffer->init(core, cbDesc.Size);
 			break;
 		}
+		for (int i = 0; i < desc.BoundResources; i++) {
+			D3D12_SHADER_INPUT_BIND_DESC bindDesc;
+			reflection->GetResourceBindingDesc(i, &bindDesc);
+			if (bindDesc.Type == D3D_SIT_TEXTURE) textureBindPoints.insert({ bindDesc.Name, bindDesc.BindPoint });
+		}
 		reflection->Release();
+
 	}
 
 	Shader* loadShader(Core* core, std::string filename, bool isVertexShader) {
@@ -104,5 +111,12 @@ public:
 		if (!sh.buffer) return;
 		if (sh.buffer->name != cbufferName) return;
 		sh.buffer->update(varName, (void*)data);
+	}
+
+	void updateTexturePS(Core* core, std::string name, int heapOffset) {
+		UINT bindPoint = textureBindPoints[name];
+		D3D12_GPU_DESCRIPTOR_HANDLE handle = core->srvHeap.gpuHandle;
+		handle.ptr = handle.ptr + (UINT64)(heapOffset - bindPoint) * (UINT64)core->srvHeap.incrementSize;
+		core->getCommandList()->SetGraphicsRootDescriptorTable(2, handle);
 	}
 };

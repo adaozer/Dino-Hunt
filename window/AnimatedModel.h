@@ -2,6 +2,7 @@
 #include "Animation.h"
 #include "GEMLoader.h"
 #include "ShaderManager.h"
+#include "texture.h"
 
 class AnimatedModel {
 public:
@@ -15,9 +16,13 @@ public:
 	Shader* pixelShader = nullptr;
 
 	GEMLoader::GEMAnimation anim;
+	std::vector<std::string> textureFilenames;
 
-	AnimatedModel(ShaderManager* sm) : shaderManager(sm) {}
+	Texture texture;
 
+	std::string filepath;
+
+	AnimatedModel(ShaderManager* sm, Texture tx, std::string _filepath) : shaderManager(sm), texture(tx), filepath(_filepath) {}
 	void load(Core* core, std::string filename)
 	{
 		GEMLoader::GEMModelLoader loader;
@@ -32,11 +37,13 @@ public:
 				memcpy(&v, &gemmeshes[i].verticesAnimated[j], sizeof(ANIMATED_VERTEX));
 				vertices.push_back(v);
 			}
+			textureFilenames.push_back(gemmeshes[i].material.find("albedo").getValue());
 			mesh->init(core, vertices, gemmeshes[i].indices);
 			meshes.push_back(mesh);
 		}
 		vertexShader = shaderManager->loadShader(core, "vertexshader_animated.hlsl", true);
-		pixelShader = shaderManager->loadShader(core, "pixelshader.hlsl", false);
+		pixelShader = shaderManager->loadShader(core, "pixelshader_textured.hlsl", false);
+		texture.load(core, filepath);
 		psos.createPSO(core, "AnimatedModel", vertexShader->shader, pixelShader->shader, vertexLayoutCache.getAnimatedLayout());
 		memcpy(&animation.skeleton.globalInverse, &gemanimation.globalInverse, 16 * sizeof(float));
 		for (int i = 0; i < gemanimation.bones.size(); i++)
@@ -82,8 +89,9 @@ public:
 		shaderManager->updateConstantVS("vertexshader_animated.hlsl", "staticMeshBuffer", "bones", instance->matrices);
 
 		vertexShader->apply(core);
-		for (int i = 0; i < meshes.size(); i++)
-		{
+
+		for (int i = 0; i < meshes.size(); i++) {
+			shaderManager->updateTexturePS(core, filepath, texture.heapOffset);
 			meshes[i]->draw(core);
 		}
 	}
