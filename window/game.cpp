@@ -15,6 +15,31 @@
 #include "AnimatedModel.h"
 #include "Camera.h"
 
+void listAnimationNames(const GEMLoader::GEMAnimation& gemanimation)
+{
+	for (int i = 0; i < gemanimation.animations.size(); i++)
+	{
+		std::cout << gemanimation.animations[i].name << std::endl;
+	}
+}
+
+void InitDebugConsole()
+{
+	AllocConsole();
+	FILE* f;
+
+	// Redirect stdout to the new console
+	freopen_s(&f, "CONOUT$", "w", stdout);
+	freopen_s(&f, "CONOUT$", "w", stderr);
+
+	std::ios::sync_with_stdio(); // keep iostreams in sync with C stdio
+
+	std::cout.clear();
+	std::cerr.clear();
+
+	std::cout << "Debug console initialised.\n";
+}
+
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nCmdShow) {
 	Window win;
 	Core core;
@@ -22,6 +47,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 	core.init(win.hwnd, win.width, win.height);
 	GamesEngineeringBase::Timer tim;
 	ShaderManager shaderManager;
+	InitDebugConsole();
 
 	AnimatedModel am(&shaderManager);
 	am.load(&core, "models/TRex.gem");
@@ -39,7 +65,9 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 	animatedInstance.init(&am.animation, 0);
 
 	AnimatedModel am2(&shaderManager);
-	am2.load(&core, "models/Cat-Siamese.gem");
+	am2.load(&core, "models/AutomaticCarbine.gem");
+
+	listAnimationNames(am2.anim);
 
 	AnimationInstance animatedInstance2;
 	animatedInstance2.init(&am2.animation, 0);
@@ -50,7 +78,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 	float aspect = win.width / win.height;
 	Matrix p = Matrix::projMatrix(aspect, fov, f, n);
 
-	Camera cam(Vec3(0,3,10));
+	Camera cam;
 	float time = 0.f;
 
 	while (true) {
@@ -62,37 +90,36 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 		if (win.keys[VK_ESCAPE] == 1) break;
 
 		time += dt;
-		cam.yaw += win.dx * cam.sensitivity;
-		cam.pitch += win.dy * cam.sensitivity;
-		float limit = 2.55;
-		if (cam.pitch > limit) cam.pitch = limit;
-		if (cam.pitch < -limit) cam.pitch = -limit;
 
-		win.dx = 0;
-		win.dy = 0;
+		if (win.mouseButtons[0]) {
+			cam.yaw += win.dx * cam.sensitivity;
+			cam.pitch += win.dy * cam.sensitivity;
 
-		Vec3 move(0, 0, 0);
-		Vec3 fwd = cam.forward();
+			float boundary = (89.f * M_PI) / 180.f;
+			if (cam.pitch > boundary) cam.pitch = boundary;
+			if (cam.pitch < -boundary) cam.pitch = -boundary;
+
+			win.dx = 0;
+			win.dy = 0;
+		}
+
+		Vec3 front = cam.front();
 		Vec3 right = cam.right();
 
-		if (win.keys['W']) move += fwd;
-		if (win.keys['A']) move -= right;
-		if (win.keys['S']) move -= fwd;
-		if (win.keys['D']) move += right;
-
-		if (move.lengthSquare() > 0.f) {
-			move = move.normalize();
-			cam.position += move * (cam.moveSpeed * dt);
-		}
+		if (win.keys['W']) cam.pos += front * cam.moveSpeed * dt;
+		if (win.keys['A']) cam.pos -= right * cam.moveSpeed * dt;
+		if (win.keys['S']) cam.pos -= front * cam.moveSpeed * dt;
+		if (win.keys['D']) cam.pos += right * cam.moveSpeed * dt;
 
 		Matrix v = cam.viewMatrix();
 		Matrix vp = v * p;
 		Matrix W;
+
 		core.beginRenderPass();
 
 		animatedInstance.update("run", dt);
 		animatedInstance1.update("death", dt);
-		animatedInstance2.update("attack02", dt);
+		animatedInstance2.update("18 empty reload", dt);
 
 		if (animatedInstance1.animationFinished() == true) animatedInstance1.resetAnimationTime();
 		if (animatedInstance.animationFinished() == true) animatedInstance.resetAnimationTime();

@@ -374,7 +374,7 @@ public:
 		return m;
 	}
 
-	static Matrix lookAt(const Vec3& to, const Vec3& from, const Vec3& up) {
+	static Matrix lookAt(const Vec3& from, const Vec3& to, const Vec3& up) {
 		Vec3 dir = (to - from).normalize();
 		Vec3 right = Vec3::Cross(up, dir).normalize();
 		Vec3 upPrime = Vec3::Cross(dir, right);

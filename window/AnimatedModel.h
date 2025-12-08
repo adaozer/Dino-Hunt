@@ -1,5 +1,5 @@
 #pragma once
-#include "Animation_fixed.h"
+#include "Animation.h"
 #include "GEMLoader.h"
 #include "ShaderManager.h"
 
@@ -13,6 +13,8 @@ public:
 	VertexLayoutCache vertexLayoutCache;
 	Shader* vertexShader = nullptr;
 	Shader* pixelShader = nullptr;
+
+	GEMLoader::GEMAnimation anim;
 
 	AnimatedModel(ShaderManager* sm) : shaderManager(sm) {}
 
@@ -69,7 +71,7 @@ public:
 			}
 			animation.animations.insert({ name, aseq });
 		}
-		
+		anim = gemanimation;
 	}
 
 	void draw(Core* core, AnimationInstance* instance, Matrix& W, Matrix& VP)

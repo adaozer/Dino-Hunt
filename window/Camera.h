@@ -1,35 +1,27 @@
 #pragma once
 #include "maths.h"
-#include <cmath>
 
 class Camera {
 public:
-    Vec3 position;
+    Vec3 pos = Vec3(0.f, 0.f, 5.f);
 
-    float yaw;
-    float pitch;
+    float yaw = 0.f;
+    float pitch = 0.f;
 
-    float moveSpeed;
-    float sensitivity;
+    float moveSpeed = 5.f;
+    float sensitivity = 0.0025f;
 
-    Camera(Vec3 _pos) : position(_pos), yaw(0.f), pitch(0.f), moveSpeed(5.f), sensitivity(0.0025f) {}
+    Vec3 up = Vec3(0, 1, 0);
 
-    Vec3 forward() const {
-        Vec3 f(std::cos(pitch) * std::cos(yaw), std::sin(pitch), std::cos(pitch) * std::sin(yaw));
-        return f.normalize();     
+    Vec3 front() const {
+        return Vec3(std::cos(pitch) * std::cos(yaw), std::sin(pitch), std::cos(pitch) * std::sin(yaw)).normalize();
     }
 
     Vec3 right() const {
-        Vec3 fwd = forward();
-        Vec3 up(0.0f, 1.0f, 0.0f);
-        Vec3 r = Vec3::Cross(up, fwd).normalize();
-        return r;
+        return Vec3::Cross(up, front()).normalize();
     }
 
     Matrix viewMatrix() const {
-        Vec3 fwd = forward();
-        Vec3 target = position + fwd;
-
-        return Matrix::lookAt(target, position, Vec3(0,1,0));
+        return Matrix::lookAt(pos, pos + front(), up);
     }
 };
