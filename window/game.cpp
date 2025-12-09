@@ -65,7 +65,8 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 	float f = 100000.f;
 	float aspect = win.width / win.height;
 	Matrix p = Matrix::projMatrix(aspect, fov, f, n);
-
+	Plane plane(&shaderManager);
+	plane.init(&core);
 	Camera cam;
 	float time = 0.f;
 
@@ -81,12 +82,12 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 
 		if (win.mouseButtons[0]) {
 			cam.yaw += win.dx * cam.sensitivity;
-			/*cam.pitch += win.dy * cam.sensitivity;
+			cam.pitch += win.dy * cam.sensitivity;
 
 			float boundary = (89.f * M_PI) / 180.f;
 			if (cam.pitch > boundary) cam.pitch = boundary;
 			if (cam.pitch < -boundary) cam.pitch = -boundary;
-			*/
+			
 			win.dx = 0;
 			win.dy = 0;
 		}
@@ -111,9 +112,13 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 
 		Matrix v = cam.viewMatrix();
 		Matrix camWorld = v.invert();
-		Vec3 offsetCam = Vec3(0, -2.f, 4.5);
+		Vec3 offsetCam = Vec3(0, -2.5, 3.5);
 		Matrix vp = v * p;
 		Matrix local = Matrix::scale(Vec3(0.01f, 0.01f, 0.01f)) * Matrix::rotateY(M_PI) * Matrix::translate(offsetCam) ;
+
+		Vec3 forwardYaw(std::cos(yaw), 0.0f, std::sin(yaw));
+		Matrix vNoPitch = Matrix::lookAt(cam.pos, cam.pos + forwardYaw, Vec3(0,1,0));
+		Matrix camWorldNoPitch = vNoPitch.invert();
 
 		core.beginRenderPass();
 
@@ -125,14 +130,12 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 		if (animatedInstance.animationFinished() == true) animatedInstance.resetAnimationTime();
 		if (animatedInstance2.animationFinished() == true) animatedInstance2.resetAnimationTime();
 
-		Matrix W = local * camWorld;
-		//W = Matrix::scale(Vec3(0.01f, 0.01f, 0.01f));
+		Matrix W = local * camWorldNoPitch;
 		am.draw(&core, &animatedInstance, W, vp);
 
+		W.setIdentity();
 		W = Matrix::scale(Vec3(0.01f, 0.01f, 0.01f)) * Matrix::translate(Vec3(5, 0, 0));
 		am1.draw(&core, &animatedInstance1, W, vp);
-
-		//W = Matrix::scale(Vec3(0.02f, 0.02f, 0.02f)) * Matrix::translate(Vec3(5.2, 0.55, -0.15));
 		
 		W = Matrix::scale(Vec3(0.01f, 0.01f, 0.01f)) * Matrix::translate(Vec3(15, 0, 0));
 		am2.draw(&core, &animatedInstance2, W, vp);
@@ -140,6 +143,8 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 		W = Matrix::scale(Vec3(0.01f, 0.01f, 0.01f)) * Matrix::translate(Vec3(10, 0, 0));
 		gem.draw(&core, W, vp);
 
+		W.setIdentity();
+		plane.draw(&core, W, vp);
 
 		core.finishFrame();
 	}
