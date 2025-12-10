@@ -51,9 +51,6 @@
     <ClInclude Include="GEMObject.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="AnimatedModel.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Animation_fixed.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -67,6 +64,12 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="texture.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimatedModel.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimationManager.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -37,8 +37,8 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 	FILE* stream;
 	freopen_s(&stream, "CONOUT$", "w", stdout);
 	*/
-	AnimatedModel am(&shaderManager, &tex, "textures/T_Animalstextures_alb.png");
-	am.load(&core, "models/Cat-Siamese.gem");
+	AnimatedModel am(&shaderManager, &tex, "textures/AC5_Albedo_alb.png");
+	am.load(&core, "models/AutomaticCarbine.gem");
 
 	AnimationInstance animatedInstance;
 	animatedInstance.init(&am.animation, 0);
@@ -52,15 +52,15 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 	AnimationInstance animatedInstance1;
 	animatedInstance1.init(&am1.animation, 0);
 
-	AnimatedModel am2(&shaderManager, &tex, "textures/AC5_Albedo_alb.png");
-	am2.load(&core, "models/AutomaticCarbine.gem");
+	AnimatedModel am2(&shaderManager, &tex, "textures/T-rex_Base_Color_alb.png");
+	am2.load(&core, "models/TRex.gem");
 
 	listAnimationNames(am2.anim);
 
 	AnimationInstance animatedInstance2;
 	animatedInstance2.init(&am2.animation, 0);
-	
-	float fov = 90.0f;    
+
+	float fov = 90.0f;
 	float n = 0.01f;
 	float f = 100000.f;
 	float aspect = win.width / win.height;
@@ -87,7 +87,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 			float boundary = (89.f * M_PI) / 180.f;
 			if (cam.pitch > boundary) cam.pitch = boundary;
 			if (cam.pitch < -boundary) cam.pitch = -boundary;
-			
+
 			win.dx = 0;
 			win.dy = 0;
 		}
@@ -108,35 +108,31 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 			move = move.normalize();
 			cam.pos += move * cam.moveSpeed * dt;
 		}
-		cam.pos.y = 2.5;
+		cam.pos.y = 3.5;
 
 		Matrix v = cam.viewMatrix();
 		Matrix camWorld = v.invert();
-		Vec3 offsetCam = Vec3(0, -2.5, 3.5);
+		Vec3 offsetCam = Vec3(0, 0, 0);
 		Matrix vp = v * p;
-		Matrix local = Matrix::scale(Vec3(0.01f, 0.01f, 0.01f)) * Matrix::rotateY(M_PI) * Matrix::translate(offsetCam) ;
-
-		Vec3 forwardYaw(std::cos(yaw), 0.0f, std::sin(yaw));
-		Matrix vNoPitch = Matrix::lookAt(cam.pos, cam.pos + forwardYaw, Vec3(0,1,0));
-		Matrix camWorldNoPitch = vNoPitch.invert();
+		Matrix local = Matrix::scale(Vec3(0.02f, 0.02f, 0.02f)) * Matrix::rotateY(M_PI) * Matrix::translate(offsetCam);
 
 		core.beginRenderPass();
 
-		animatedInstance.update("run forward", dt);
+		animatedInstance.update("08 fire", dt);
 		animatedInstance1.update("firing rifle", dt);
-		animatedInstance2.update("08 fire", dt);
+		animatedInstance2.update("run", dt);
 
 		if (animatedInstance1.animationFinished() == true) animatedInstance1.resetAnimationTime();
 		if (animatedInstance.animationFinished() == true) animatedInstance.resetAnimationTime();
 		if (animatedInstance2.animationFinished() == true) animatedInstance2.resetAnimationTime();
 
-		Matrix W = local * camWorldNoPitch;
+		Matrix W = local * camWorld;
 		am.draw(&core, &animatedInstance, W, vp);
 
 		W.setIdentity();
 		W = Matrix::scale(Vec3(0.01f, 0.01f, 0.01f)) * Matrix::translate(Vec3(5, 0, 0));
 		am1.draw(&core, &animatedInstance1, W, vp);
-		
+
 		W = Matrix::scale(Vec3(0.01f, 0.01f, 0.01f)) * Matrix::translate(Vec3(15, 0, 0));
 		am2.draw(&core, &animatedInstance2, W, vp);
 
