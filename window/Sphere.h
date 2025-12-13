@@ -2,6 +2,7 @@
 
 #include "mesh.h"
 #include "ShaderManager.h"
+#include "Texture.h"
 
 class Sphere {
 public:
@@ -11,14 +12,17 @@ public:
 	VertexLayoutCache vertexLayoutCache;
 	Shader* vertexShader = nullptr;
 	Shader* pixelShader = nullptr;
+	TextureManager* textureManager = nullptr;
+	Texture* texture = nullptr;
+	std::string filename;
 
 	std::vector<STATIC_VERTEX> vertices;
 	std::vector<unsigned int> indices;
 
-	Sphere(ShaderManager* sm) : shaderManager(sm) {}
+	Sphere(ShaderManager* sm, TextureManager* tm, std::string _filename) : shaderManager(sm), textureManager(tm), filename(_filename) {}
 
 	void init(Core* core) {
-		float radius = 1.0f;
+		float radius = 20.0f;
 		int rings = 16;
 		int segments = 16;
 		float pi = 3.14159f;
@@ -34,7 +38,7 @@ public:
 					radius * sinTheta * sinPhi);
 				Vec3 normal = position.normalize();
 				float tu = 1.0f - (float)lon / segments;
-				float tv = 1.0f - (float)lat / rings;
+				float tv = (float)lat / rings;
 				vertices.push_back(addVertex(position, normal, tu, tv));
 			}
 		}
@@ -54,7 +58,8 @@ public:
 		}
 		mesh.init(core, vertices, indices);
 		vertexShader = shaderManager->loadShader(core, "vertexshader.hlsl", true);
-		pixelShader = shaderManager->loadShader(core, "pixelshader.hlsl", false);
+		pixelShader = shaderManager->loadShader(core, "pixelshader_textured.hlsl", false);
+		texture = textureManager->loadTexture(core, filename);
 		psos.createPSO(core, "Sphere", vertexShader->shader, pixelShader->shader, vertexLayoutCache.getStaticLayout());
 	}
 
@@ -65,6 +70,7 @@ public:
 		shaderManager->updateConstantVS("vertexshader.hlsl", "staticMeshBuffer", "VP", &VP);
 
 		vertexShader->apply(core);
+		shaderManager->updateTexturePS(core, "tex", texture->heapOffset);
 		mesh.draw(core);
 	}
 };

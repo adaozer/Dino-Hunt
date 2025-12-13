@@ -72,6 +72,12 @@
     <ClInclude Include="AnimationManager.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="Gun.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Enemy.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="window.cpp">

@@ -103,6 +103,7 @@ public:
 	Matrix matrices[256];
 	Matrix matricesPose[256];
 	Matrix coordTransform;
+	bool looping = false;
 
 	void init(Animation* _animation, int fromYZX)
 	{
@@ -125,6 +126,7 @@ public:
 	bool animationFinished()
 	{
 		if (currentAnimation.empty()) return true;
+		if (looping) return false;
 		return t >= animation->animations.at(currentAnimation).duration();
 	}
 
@@ -136,16 +138,22 @@ public:
 			currentAnimation = name; t = 0;
 		}
 		
-		float dur = animation->animations[currentAnimation].duration();
+		float dur = animation->animations.at(currentAnimation).duration();
 		if (dur <= 0.0f) dur = 0.00001f;
-		if (t >= dur) t = dur;
+
+		if (looping && t >= dur) {
+			t = fmod(t, dur);
+		}
+		else if (!looping && t >= dur) {
+			t = dur;
+		}
 		
 		int frame = 0;
 		float interpolationFact = 0;
-		animation->calcFrame(name, t, frame, interpolationFact);
+		animation->calcFrame(currentAnimation, t, frame, interpolationFact);
 		for (int i = 0; i < animation->bonesSize(); i++)
 		{
-			matrices[i] = animation->interpolateBoneToGlobal(name, matrices, frame, interpolationFact, i);
+			matrices[i] = animation->interpolateBoneToGlobal(currentAnimation, matrices, frame, interpolationFact, i);
 		}
 		animation->calcFinalTransforms(matrices, coordTransform);
 	}

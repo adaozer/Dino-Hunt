@@ -4,93 +4,28 @@
 
 enum class AnimationName {
 	Idle,
-	Shoot,
+	Attack,
 	Reload,
 	Death,
 	Inspect
 };
 
-struct AnimKey {
-	AnimationName action;
-	bool operator==(const AnimKey& key) const { return action == key.action; }
-};
-
-
 class AnimationManager {
 public:
 	std::unordered_map<std::string, std::unordered_map<AnimationName, std::string>> table;
 
-	void set(const std::string& modelId, AnimationName name, const std::string& clip)
-	{
+	void set(const std::string& modelId, AnimationName name, const std::string& clip) {
 		table[modelId][name] = clip;
 	}
 
-	const std::string& get(const std::string& modelId, AnimationName name) const
-	{
+	const std::string& get(const std::string& modelId, AnimationName name) const {
 		return table.at(modelId).at(name);
 	}
 
-	bool has(const std::string& modelId, AnimationName name) const
-	{
+	bool has(const std::string& modelId, AnimationName name) const {
 		auto it = table.find(modelId);
 		if (it == table.end()) return false;
 		return it->second.find(name) != it->second.end();
-	}
-};
-
-
-class Gun {
-public:
-	int bullets = 50;
-	int bulletCount = 50;
-	bool reloading = false;
-	float reloadTime = 0.f;
-	float reloadLength = 1.875f;
-
-	void reload() {
-		if (reloading) return;
-		if (bullets == bulletCount) return;
-		reloading = true;
-		reloadTime = reloadLength;
-		//reload animation
-	}
-
-	void shoot() {
-		if (reloading) return;
-		if (bullets <= 0) {
-			reload();
-			return;
-		}
-		bullets -= 1;
-		//shoot animation
-	}
-
-	void update(float dt) {
-		if (reloading) reloadTime -= dt;
-		if (reloadTime <= 0.f) {
-			reloading = false;
-			bullets = bulletCount;
-			reloadTime = 0.f;
-		}
-	}
-};
-
-class Enemy {
-public:
-	bool isAlive = true;
-	int health = 100;
-
-	void die() {
-		isAlive = false;
-		//death animation
-	}
-
-	void takeDamage(int damage) {
-		if (!isAlive) return;
-		health -= damage;
-		if (health <= 0) {
-			die();
-		}
 	}
 };
 

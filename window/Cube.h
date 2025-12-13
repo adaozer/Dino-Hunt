@@ -1,6 +1,7 @@
 #pragma once
 #include "mesh.h"
 #include "ShaderManager.h"
+#include "Texture.h"
 
 class Cube {
 public:
@@ -10,11 +11,14 @@ public:
 	VertexLayoutCache vertexLayoutCache;
 	Shader* vertexShader = nullptr;
 	Shader* pixelShader = nullptr;
+	TextureManager* textureManager = nullptr;
+	Texture* texture = nullptr;
+	std::string filepath;
 
 	std::vector<STATIC_VERTEX> vertices;
 	std::vector<unsigned int> indices;
 
-	Cube(ShaderManager* sm) : shaderManager(sm) {}
+	Cube(ShaderManager* sm, TextureManager* tm, std::string _filename) : shaderManager(sm), textureManager(tm), filepath(_filename) {}
 
 	void init(Core* core) {
 		vertices.clear();
@@ -69,7 +73,8 @@ public:
 
 		mesh.init(core, vertices, indices);
 		vertexShader = shaderManager->loadShader(core, "vertexshader.hlsl", true);
-		pixelShader = shaderManager->loadShader(core, "pixelshader.hlsl", false);
+		pixelShader = shaderManager->loadShader(core, "pixelshader_textured.hlsl", false);
+		texture = textureManager->loadTexture(core, filepath);
 		psos.createPSO(core, "Cube", vertexShader->shader, pixelShader->shader, vertexLayoutCache.getStaticLayout());
 	}
 
@@ -80,6 +85,7 @@ public:
 		shaderManager->updateConstantVS("vertexshader.hlsl", "staticMeshBuffer", "VP", &VP);
 
 		vertexShader->apply(core);
+		shaderManager->updateTexturePS(core, "tex", texture->heapOffset);
 		mesh.draw(core);
 	}
 };

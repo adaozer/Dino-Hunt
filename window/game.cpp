@@ -15,6 +15,9 @@
 #include "AnimatedModel.h"
 #include "Camera.h"
 #include "Texture.h"
+#include "AnimationManager.h"
+#include "Gun.h"
+#include "Enemy.h"
 
 void listAnimationNames(AnimatedModel am)
 {
@@ -26,7 +29,10 @@ void listAnimationNames(AnimatedModel am)
 	}
 
 }
-
+//center cursor
+// animasyon manageri tam anlamak
+// play functionlari
+// gun update
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nCmdShow) {
 	Window win;
 	Core core;
@@ -36,64 +42,96 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 	ShaderManager shaderManager;
 	TextureManager tex;
 
+	/*
 	AllocConsole();
 	FILE* stream;
 	freopen_s(&stream, "CONOUT$", "w", stdout);
-	
-	AnimatedModel am(&shaderManager, &tex, "textures/AC5_Albedo_alb.png");
-	am.load(&core, "models/AutomaticCarbine.gem");
+	*/
 
-	AnimationInstance animatedInstance;
-	animatedInstance.init(&am.animation, 0);
+	AnimatedModel gunModel(&shaderManager, &tex, "textures/AC5_Albedo_alb.png");
+	gunModel.load(&core, "models/AutomaticCarbine.gem");
 
-	GEMObject gem(&shaderManager, &tex, "textures/bamboo branch_ALB.png");
-	gem.init(&core, "models/bamboo.gem");
+	AnimatedModel enemyModel(&shaderManager, &tex, "textures/T-rex_Base_Color_alb.png");
+	enemyModel.load(&core, "models/TRex.gem");
 
-	AnimatedModel am1(&shaderManager, &tex, "textures/MaleDuty_1_OBJ_Serious_Packed0_Diffuse_alb.png");
-	am1.load(&core, "models/Soldier1.gem");
+	GEMObject bamboo(&shaderManager, &tex, "textures/bamboo branch_ALB.png");
+	bamboo.init(&core, "models/bamboo.gem");
 
-	AnimationInstance animatedInstance1;
-	animatedInstance1.init(&am1.animation, 0);
+	AnimationManager animationManager;
+	EnemyManager enemyManager;
 
-	AnimatedModel am2(&shaderManager, &tex, "textures/T-rex_Base_Color_alb.png");
-	am2.load(&core, "models/TRex.gem");
+	animationManager.set("AutomaticCarbine", AnimationName::Idle, "04 idle");
+	animationManager.set("AutomaticCarbine", AnimationName::Attack, "08 fire");
+	animationManager.set("AutomaticCarbine", AnimationName::Reload, "17 reload");
+	animationManager.set("AutomaticCarbine", AnimationName::Inspect, "05 inspect");
 
-	listAnimationNames(am2);
+	animationManager.set("TRex", AnimationName::Idle, "run");
+	animationManager.set("TRex", AnimationName::Attack, "attack");
 
-	AnimationInstance animatedInstance2;
-	animatedInstance2.init(&am2.animation, 0);
+	Gun gun;
+	gun.init(&gunModel, animationManager);
+
+	Matrix enemyW = Matrix::scale(Vec3(0.01f, 0.01f, 0.01f)) * Matrix::translate(Vec3(10, 0, 0));
+	enemyManager.spawn(&enemyModel, enemyW, animationManager);
+
+	Plane plane(&shaderManager);
+	plane.init(&core);
+
+	Sphere sphere(&shaderManager, &tex, "textures/kloofendal_48d_partly_cloudy_puresky.jpg");
+	sphere.init(&core);
 
 	float fov = 90.0f;
 	float n = 0.01f;
 	float f = 100000.f;
 	float aspect = win.width / win.height;
 	Matrix p = Matrix::projMatrix(aspect, fov, f, n);
-	Plane plane(&shaderManager);
-	plane.init(&core);
 	Camera cam;
 	float time = 0.f;
+
+	bool lastMouseDown = false;
+	bool centered = false;
+	bool lastZPress = false;
 
 	while (true) {
 		core.beginFrame();
 
 		float dt = tim.dt();
 		win.processMessages();
+		if (centered) {
+			win.centerCursor();
+		}
 
 		if (win.keys[VK_ESCAPE] == 1) break;
+		bool zPress = win.keys['Z'];
+		if (zPress && !lastZPress) {
+			if (centered) {
+				centered = false;
+				ShowCursor(TRUE);
+			}
+			else {
+				centered = true;
+				ShowCursor(FALSE);
+			}
+		}
+		lastZPress = zPress;
 
 		time += dt;
+		bool mouseDown = win.mouseButtons[0];
 
-		if (win.mouseButtons[0]) {
-			cam.yaw += win.dx * cam.sensitivity;
-			cam.pitch += win.dy * cam.sensitivity;
+		if (mouseDown && !lastMouseDown) gun.onTriggerPressed();
+		if (!mouseDown && lastMouseDown) gun.onTriggerReleased();
 
-			float boundary = (89.f * M_PI) / 180.f;
-			if (cam.pitch > boundary) cam.pitch = boundary;
-			if (cam.pitch < -boundary) cam.pitch = -boundary;
+		lastMouseDown = mouseDown;
 
-			win.dx = 0;
-			win.dy = 0;
-		}
+		cam.yaw += win.dx * cam.sensitivity;
+		cam.pitch += win.dy * cam.sensitivity;
+
+		float boundary = (89.f * M_PI) / 180.f;
+		if (cam.pitch > boundary) cam.pitch = boundary;
+		if (cam.pitch < -boundary) cam.pitch = -boundary;
+
+		win.dx = 0;
+		win.dy = 0;
 
 		float yaw = cam.yaw;
 
@@ -106,6 +144,8 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 		if (win.keys['A']) move += right;
 		if (win.keys['S']) move -= forward;
 		if (win.keys['D']) move -= right;
+		if (win.keys['R']) gun.reload(animationManager);
+		if (win.keys['F']) gun.inspect(animationManager);
 
 		if (move.lengthSquare() > 0.f) {
 			move = move.normalize();
@@ -119,31 +159,23 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 		Matrix vp = v * p;
 		Matrix local = Matrix::scale(Vec3(0.02f, 0.02f, 0.02f)) * Matrix::rotateY(M_PI) * Matrix::translate(offsetCam);
 
+		Matrix gunW = local * camWorld;
+		
+		gun.update(dt, animationManager);
+		enemyManager.update(dt, animationManager);
+
 		core.beginRenderPass();
 
-		animatedInstance.update("08 fire", dt);
-		animatedInstance1.update("firing rifle", dt);
-		animatedInstance2.update("run", dt);
+		gun.draw(&core, gunW, vp);
+		enemyManager.draw(&core, vp);
 
-		if (animatedInstance1.animationFinished() == true) animatedInstance1.resetAnimationTime();
-		if (animatedInstance.animationFinished() == true) animatedInstance.resetAnimationTime();
-		if (animatedInstance2.animationFinished() == true) animatedInstance2.resetAnimationTime();
-
-		Matrix W = local * camWorld;
-		am.draw(&core, &animatedInstance, W, vp);
-
-		W.setIdentity();
-		W = Matrix::scale(Vec3(0.01f, 0.01f, 0.01f)) * Matrix::translate(Vec3(5, 0, 0));
-		am1.draw(&core, &animatedInstance1, W, vp);
-
-		W = Matrix::scale(Vec3(0.01f, 0.01f, 0.01f)) * Matrix::translate(Vec3(15, 0, 0));
-		am2.draw(&core, &animatedInstance2, W, vp);
-
-		W = Matrix::scale(Vec3(0.01f, 0.01f, 0.01f)) * Matrix::translate(Vec3(10, 0, 0));
-		gem.draw(&core, W, vp);
+		Matrix W = Matrix::scale(Vec3(0.01f, 0.01f, 0.01f)) * Matrix::translate(Vec3(5, 0, 0));
+		bamboo.draw(&core, W, vp);
 
 		W.setIdentity();
 		plane.draw(&core, W, vp);
+
+		sphere.draw(&core, W, vp);
 
 		core.finishFrame();
 	}

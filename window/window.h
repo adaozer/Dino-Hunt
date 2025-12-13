@@ -26,4 +26,16 @@ public:
 	void updateMouse(int x, int y);
 
 	void processMessages();
+
+	void centerCursor()
+	{
+		POINT center;
+		center.x = width / 2;
+		center.y = height / 2;
+		ClientToScreen(hwnd, &center);
+		SetCursorPos(center.x, center.y);
+
+		mousex = width / 2;
+		mousey = height / 2;
+	}
 };
