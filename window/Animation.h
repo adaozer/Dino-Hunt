@@ -124,21 +124,22 @@ public:
 
 	bool animationFinished()
 	{
-		if (t > animation->animations[currentAnimation].duration())
-		{
-			return true;
-		}
-		return false;
+		if (currentAnimation.empty()) return true;
+		return t >= animation->animations.at(currentAnimation).duration();
 	}
 
-	void update(std::string name, float dt) {
+	void update(const std::string& name, float dt) {
 		if (name == currentAnimation) {
 			t += dt;
 		}
 		else {
 			currentAnimation = name; t = 0;
 		}
-		if (animationFinished() == true) { resetAnimationTime(); }
+		
+		float dur = animation->animations[currentAnimation].duration();
+		if (dur <= 0.0f) dur = 0.00001f;
+		if (t >= dur) t = dur;
+		
 		int frame = 0;
 		float interpolationFact = 0;
 		animation->calcFrame(name, t, frame, interpolationFact);

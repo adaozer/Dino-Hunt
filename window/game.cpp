@@ -16,12 +16,15 @@
 #include "Camera.h"
 #include "Texture.h"
 
-void listAnimationNames(const GEMLoader::GEMAnimation& gemanimation)
+void listAnimationNames(AnimatedModel am)
 {
-	for (int i = 0; i < gemanimation.animations.size(); i++)
-	{
-		std::cout << gemanimation.animations[i].name << std::endl;
+	for (auto& [name, seq] : am.animation.animations) {
+		std::cout << name << " : "
+			<< seq.frames.size() << " frames, "
+			<< seq.ticksPerSecond << " tps, "
+			<< seq.duration() << " sec\n";
 	}
+
 }
 
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nCmdShow) {
@@ -33,10 +36,10 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 	ShaderManager shaderManager;
 	TextureManager tex;
 
-	/*AllocConsole();
+	AllocConsole();
 	FILE* stream;
 	freopen_s(&stream, "CONOUT$", "w", stdout);
-	*/
+	
 	AnimatedModel am(&shaderManager, &tex, "textures/AC5_Albedo_alb.png");
 	am.load(&core, "models/AutomaticCarbine.gem");
 
@@ -55,7 +58,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 	AnimatedModel am2(&shaderManager, &tex, "textures/T-rex_Base_Color_alb.png");
 	am2.load(&core, "models/TRex.gem");
 
-	listAnimationNames(am2.anim);
+	listAnimationNames(am2);
 
 	AnimationInstance animatedInstance2;
 	animatedInstance2.init(&am2.animation, 0);
