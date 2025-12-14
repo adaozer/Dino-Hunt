@@ -1,0 +1,32 @@
+cbuffer staticMeshBuffer
+{
+    float4x4 VP;
+};
+
+struct VS_INPUT
+{
+    float4 Pos : POSITION;
+    float3 Normal : NORMAL;
+    float3 Tangent : TANGENT;
+    float2 TexCoord : TEXCOORD;
+    float4x4 World : WORLD;
+};
+
+struct PS_INPUT
+{
+    float4 Pos : SV_POSITION;
+    float3 Normal : NORMAL;
+    float3 Tangent : TANGENT;
+    float2 TexCoord : TEXCOORD;
+};
+
+PS_INPUT VS(VS_INPUT input)
+{
+    PS_INPUT output;
+    output.Pos = mul(input.Pos, input.World);
+    output.Pos = mul(output.Pos, VP);
+    output.Normal = mul(input.Normal, (float3x3)input.World);
+    output.Tangent = mul(input.Tangent, (float3x3)input.World);
+    output.TexCoord = input.TexCoord;
+    return output;
+}

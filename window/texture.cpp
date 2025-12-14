@@ -1,6 +1,7 @@
 #include "texture.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#include <iostream>
 
 void Texture::upload(Core* core, int width, int height, int channels, void* data) {
 	D3D12_HEAP_PROPERTIES heapDesc;

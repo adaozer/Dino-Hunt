@@ -22,7 +22,7 @@ public:
 	Sphere(ShaderManager* sm, TextureManager* tm, std::string _filename) : shaderManager(sm), textureManager(tm), filename(_filename) {}
 
 	void init(Core* core) {
-		float radius = 20.0f;
+		float radius = 60.0f;
 		int rings = 16;
 		int segments = 16;
 		float pi = 3.14159f;

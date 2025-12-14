@@ -18,6 +18,7 @@
 #include "AnimationManager.h"
 #include "Gun.h"
 #include "Enemy.h"
+#include "InstancedObject.h"
 
 void listAnimationNames(AnimatedModel am)
 {
@@ -47,15 +48,41 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 	FILE* stream;
 	freopen_s(&stream, "CONOUT$", "w", stdout);
 	*/
-
 	AnimatedModel gunModel(&shaderManager, &tex, "textures/AC5_Albedo_alb.png");
 	gunModel.load(&core, "models/AutomaticCarbine.gem");
 
 	AnimatedModel enemyModel(&shaderManager, &tex, "textures/T-rex_Base_Color_alb.png");
 	enemyModel.load(&core, "models/TRex.gem");
 
-	GEMObject bamboo(&shaderManager, &tex, "textures/bamboo branch_ALB.png");
-	bamboo.init(&core, "models/bamboo.gem");
+	std::vector<INSTANCE> treeInstances;
+	treeInstances.reserve(500);
+
+	for (int i = 0; i < 500; i++) {
+		float x = (float)((rand() % 400) - 200);
+		float z = (float)((rand() % 400) - 200);
+
+		INSTANCE inst;
+		inst.W = Matrix::scale(Vec3(0.01f, 0.01f, 0.01f)) * Matrix::translate(Vec3(x, 0.f, z));
+		treeInstances.push_back(inst);
+	}
+
+	InstancedObject bamboo(&shaderManager, &tex, "textures/bamboo branch_ALB.png");
+	bamboo.init(&core, "models/bamboo.gem", treeInstances);
+
+	std::vector<INSTANCE> grassInstances;
+	grassInstances.reserve(500);
+
+	for (int i = 0; i < 500; i++) {
+		float x = (float)((rand() % 400) - 200);
+		float z = (float)((rand() % 400) - 200);
+
+		INSTANCE inst;
+		inst.W = Matrix::scale(Vec3(0.01f, 0.01f, 0.01f)) * Matrix::translate(Vec3(x, 0.f, z));
+		grassInstances.push_back(inst);
+	}
+
+	InstancedObject grass(&shaderManager, &tex, "textures/TX_GrassClumps_01_ALB.png");
+	grass.init(&core, "models/Grass_Clump_01c.gem", grassInstances);
 
 	AnimationManager animationManager;
 	EnemyManager enemyManager;
@@ -169,10 +196,11 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 		gun.draw(&core, gunW, vp);
 		enemyManager.draw(&core, vp);
 
-		Matrix W = Matrix::scale(Vec3(0.01f, 0.01f, 0.01f)) * Matrix::translate(Vec3(5, 0, 0));
-		bamboo.draw(&core, W, vp);
+		bamboo.draw(&core, vp);
+		Matrix W;
 
-		W.setIdentity();
+		grass.draw(&core, vp);
+
 		plane.draw(&core, W, vp);
 
 		sphere.draw(&core, W, vp);

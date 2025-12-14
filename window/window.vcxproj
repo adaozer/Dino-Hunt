@@ -124,6 +124,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AlphaTested.h" />
     <ClInclude Include="AnimatedModel.h" />
     <ClInclude Include="Animation.h" />
     <ClInclude Include="AnimationManager.h" />
@@ -138,6 +139,7 @@
     <ClInclude Include="Fence.h" />
     <ClInclude Include="GEMObject.h" />
     <ClInclude Include="Gun.h" />
+    <ClInclude Include="InstancedObject.h" />
     <ClInclude Include="maths.h" />
     <ClInclude Include="mesh.h" />
     <ClInclude Include="Plane.h" />
