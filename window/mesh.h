@@ -93,7 +93,7 @@ STATIC_VERTEX addVertex(Vec3 p, Vec3 n, float tu, float tv) {
 	STATIC_VERTEX v;
 	v.pos = p;
 	v.normal = n;
-	v.tangent = Vec3(0, 0, 0); // For now
+	v.tangent = Vec3(1, 0, 0); // For now
 	v.tu = tu;
 	v.tv = tv;
 	return v;
@@ -196,7 +196,7 @@ public:
 	}
 
 	void init(Core* core, std::vector<STATIC_VERTEX> vertices, std::vector<INSTANCE> instances, std::vector<unsigned int>indices) {
-		init(core, &vertices[0], sizeof(STATIC_VERTEX), vertices.size(), &indices[0], indices.size(), instances.data(), sizeof(INSTANCE), instances.size());
+		init(core, &vertices[0], sizeof(STATIC_VERTEX), vertices.size(), &indices[0], indices.size(), &instances[0], sizeof(INSTANCE), instances.size());
 		inputLayoutDesc = VertexLayoutCache::getInstancedLayout();
 	}
 

@@ -19,10 +19,13 @@ public:
 	std::vector<std::string> textureFilenames;
 
 	TextureManager* textureManager;
-	Texture* texture = nullptr;
+	Texture* diffuseTex = nullptr;
+	Texture* normalTex = nullptr;
 	std::string filepath;
+	std::string filepath2;
 
-	AnimatedModel(ShaderManager* sm, TextureManager* tx, std::string _filepath) : shaderManager(sm), textureManager(tx), filepath(_filepath) {}
+	AnimatedModel(ShaderManager* sm, TextureManager* tx, std::string _filepath, std::string _filepath2) : shaderManager(sm), 
+		textureManager(tx), filepath(_filepath), filepath2(_filepath2) {}
 	void load(Core* core, std::string filename)
 	{
 		GEMLoader::GEMModelLoader loader;
@@ -42,8 +45,9 @@ public:
 			meshes.push_back(mesh);
 		}
 		vertexShader = shaderManager->loadShader(core, "vertexshader_animated.hlsl", true);
-		pixelShader = shaderManager->loadShader(core, "pixelshader_textured.hlsl", false);
-		texture = textureManager->loadTexture(core, filepath);
+		pixelShader = shaderManager->loadShader(core, "pixelshader_alphatesting.hlsl", false);
+		diffuseTex = textureManager->loadTexture(core, filepath);
+		//normalTex = textureManager->loadTexture(core, filepath2);
 		psos.createPSO(core, "AnimatedModel", vertexShader->shader, pixelShader->shader, vertexLayoutCache.getAnimatedLayout());
 		memcpy(&animation.skeleton.globalInverse, &gemanimation.globalInverse, 16 * sizeof(float));
 		for (int i = 0; i < gemanimation.bones.size(); i++)
@@ -87,11 +91,15 @@ public:
 		shaderManager->updateConstantVS("vertexshader_animated.hlsl", "staticMeshBuffer", "W", &W);
 		shaderManager->updateConstantVS("vertexshader_animated.hlsl", "staticMeshBuffer", "VP", &VP);
 		shaderManager->updateConstantVS("vertexshader_animated.hlsl", "staticMeshBuffer", "bones", instance->matrices);
-
+		Vec3 ld = Vec3(1, 1, 0).normalize();
+		Vec3 lc = Vec3(1, 1, 1);
+		//shaderManager->updateConstantPS("pixelshader_normalmapped.hlsl", "Lights", "lightDir", &ld);
+		//shaderManager->updateConstantPS("pixelshader_normalmapped.hlsl", "Lights", "lightColour", &lc);
 		vertexShader->apply(core);
+		//pixelShader->apply(core);
 
 		for (int i = 0; i < meshes.size(); i++) {
-			shaderManager->updateTexturePS(core, "tex", texture->heapOffset);
+			shaderManager->updateTexturePS(core, "diffuseTex", diffuseTex->heapOffset);
 			meshes[i]->draw(core);
 		}
 	}

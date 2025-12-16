@@ -3,7 +3,7 @@
 #include "stb_image.h"
 #include <iostream>
 
-void Texture::upload(Core* core, int width, int height, int channels, void* data) {
+void Texture::upload(Core* core, int width, int height, int channels, void* data, bool normal) {
 	D3D12_HEAP_PROPERTIES heapDesc;
 	memset(&heapDesc, 0, sizeof(D3D12_HEAP_PROPERTIES));
 	heapDesc.Type = D3D12_HEAP_TYPE_DEFAULT;
@@ -14,7 +14,12 @@ void Texture::upload(Core* core, int width, int height, int channels, void* data
 	textureDesc.Height = height;
 	textureDesc.DepthOrArraySize = 1;
 	textureDesc.MipLevels = 1;
-	textureDesc.Format = format;
+	if (normal) {
+		textureDesc.Format = normal_format;
+	}
+	else {
+		textureDesc.Format = format;
+	}
 	textureDesc.SampleDesc.Count = 1;
 	textureDesc.SampleDesc.Quality = 0;
 	textureDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
@@ -40,7 +45,7 @@ void Texture::upload(Core* core, int width, int height, int channels, void* data
 	heapOffset = core->srvHeap.used - 1;
 }
 
-void Texture::load(Core* core, std::string filename) {
+void Texture::load(Core* core, std::string filename, bool isNormal) {
 	int width = 0;
 	int height = 0;
 	int channels = 0;
@@ -54,22 +59,22 @@ void Texture::load(Core* core, std::string filename) {
 			texelsWithAlpha[(i * 4) + 2] = texels[(i * 3) + 2];
 			texelsWithAlpha[(i * 4) + 3] = 255;
 		}
-		upload(core, width, height, channels, texelsWithAlpha);
+		upload(core, width, height, channels, texelsWithAlpha, isNormal);
 		delete[] texelsWithAlpha;
 	}
 	else {
-		upload(core, width, height, channels, texels);
+		upload(core, width, height, channels, texels, isNormal);
 	}
 	stbi_image_free(texels);
 }
 
-Texture* TextureManager::loadTexture(Core* core, std::string filename) {
+Texture* TextureManager::loadTexture(Core* core, std::string filename, bool isNormal) {
 	auto it = textures.find(filename);
 	if (it != textures.end()) {
 		return it->second;
 	}
 	Texture* tex = new Texture;
-	tex->load(core, filename);
+	tex->load(core, filename, isNormal);
 	textures.insert({ filename, tex });
 	return tex;
 }

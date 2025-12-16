@@ -24,13 +24,12 @@ public:
 		}
 	}
 
-	void draw(Core* core, Texture* texture, ShaderManager* shaderManager) {
+	void draw(Core* core, Texture* diffuseTex, ShaderManager* shaderManager) {
 		for (int i = 0; i < meshes.size(); i++) {
-			shaderManager->updateTexturePS(core, "tex", texture->heapOffset);
+			shaderManager->updateTexturePS(core, "diffuseTex", diffuseTex->heapOffset);
 			meshes[i]->draw(core);
 		}
 	}
-
 };
 
 class GEMObject {
@@ -42,16 +41,20 @@ public:
 	Shader* pixelShader = nullptr;
 	StaticMesh sm;
 	TextureManager* textureManager;
-	Texture* texture = nullptr;
+	Texture* diffuseTex = nullptr;
+	Texture* normalTex = nullptr;
 	std::string filepath;
+	std::string filepath2;
 
-	GEMObject(ShaderManager* shadermanager, TextureManager* tx, std::string _filepath) : shaderManager(shadermanager), textureManager(tx), filepath(_filepath) {}
+	GEMObject(ShaderManager* shadermanager, TextureManager* tx, std::string _filepath, std::string _filepath2) : shaderManager(shadermanager), textureManager(tx), 
+		filepath(_filepath), filepath2(_filepath2) {}
 
 	void init(Core* core, std::string filename) {
 		sm.load(core, filename);
 		vertexShader = shaderManager->loadShader(core, "vertexshader.hlsl", true);
-		pixelShader = shaderManager->loadShader(core, "pixelshader_textured.hlsl", false);
-		texture = textureManager->loadTexture(core, filepath);
+		pixelShader = shaderManager->loadShader(core, "pixelshader_normalmapped.hlsl", false);
+		diffuseTex = textureManager->loadTexture(core, filepath);
+		normalTex = textureManager->loadTexture(core, filepath2);
 		psos.createPSO(core, "GEMObject", vertexShader->shader, pixelShader->shader, vertexLayoutCache.getStaticLayout());
 	}
 
@@ -60,6 +63,6 @@ public:
 		shaderManager->updateConstantVS("vertexshader.hlsl", "staticMeshBuffer", "W", &W);
 		shaderManager->updateConstantVS("vertexshader.hlsl", "staticMeshBuffer", "VP", &VP);
 		vertexShader->apply(core);
-		sm.draw(core, texture, shaderManager);
+		sm.draw(core, diffuseTex, shaderManager);
 	}
 };

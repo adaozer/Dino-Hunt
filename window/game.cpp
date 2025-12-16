@@ -19,6 +19,7 @@
 #include "Gun.h"
 #include "Enemy.h"
 #include "InstancedObject.h"
+#include "collision.h"
 
 void listAnimationNames(AnimatedModel am)
 {
@@ -28,14 +29,11 @@ void listAnimationNames(AnimatedModel am)
 			<< seq.ticksPerSecond << " tps, "
 			<< seq.duration() << " sec\n";
 	}
-
+	
 }
 static float rand01() { return (float)rand() / (float)RAND_MAX; }            
 static float randRange(float a, float b) { return a + (b - a) * rand01(); }
-//center cursor
-// animasyon manageri tam anlamak
-// play functionlari
-// gun update
+
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nCmdShow) {
 	Window win;
 	Core core;
@@ -44,16 +42,18 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 	GamesEngineeringBase::Timer tim;
 	ShaderManager shaderManager;
 	TextureManager tex;
-
 	/*
 	AllocConsole();
 	FILE* stream;
 	freopen_s(&stream, "CONOUT$", "w", stdout);
 	*/
-	AnimatedModel gunModel(&shaderManager, &tex, "textures/AC5_Albedo_alb.png");
+	GEMObject bananaTree(&shaderManager, &tex, "textures/banana2_LOD5_ALB.png", "textures/banana2_LOD5_NH.png");
+	bananaTree.init(&core, "models/banana2_LOD5.gem");
+
+	AnimatedModel gunModel(&shaderManager, &tex, "textures/AC5_Albedo_alb.png", "textures/AC5_Albedo_nh.png");
 	gunModel.load(&core, "models/AutomaticCarbine.gem");
 
-	AnimatedModel enemyModel(&shaderManager, &tex, "textures/T-rex_Base_Color_alb.png");
+	AnimatedModel enemyModel(&shaderManager, &tex, "textures/T-rex_Base_Color_alb.png", "textures/T-rex_Base_Color_nh.png");
 	enemyModel.load(&core, "models/TRex.gem");
 
 	std::vector<INSTANCE> treeInstances;
@@ -68,22 +68,20 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 		treeInstances.push_back(inst);
 	}
 
-	InstancedObject bamboo(&shaderManager, &tex, "textures/bamboo branch_ALB.png");
+	InstancedObject bamboo(&shaderManager, &tex, "textures/bamboo branch_ALB.png", "textures/bamboo branch_NH.png");
 	bamboo.init(&core, "models/bamboo.gem", treeInstances);
 
 	std::vector<INSTANCE> grassInstances;
-	grassInstances.reserve(2000); // grass should be dense
+	grassInstances.reserve(2000);
 
 	for (int i = 0; i < 2000; i++)
 	{
 		float x = randRange(-200.0f, 200.0f);
 		float z = randRange(-200.0f, 200.0f);
 
-		// small variation
-		float s = randRange(0.0045f, 0.010f);           // much smaller than bamboo
+		float s = randRange(0.0045f, 0.010f);          
 		float yaw = randRange(0.0f, 2.0f * (float)M_PI);
 
-		// if your grass model pivot is not at the base, you may need a small negative y here
 		float y = 0.0f;
 
 		INSTANCE inst;
@@ -95,7 +93,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 		grassInstances.push_back(inst);
 	}
 
-	InstancedObject grass(&shaderManager, &tex, "textures/TX_GrassClumps_01_ALB.png");
+	InstancedObject grass(&shaderManager, &tex, "textures/TX_GrassClumps_01_ALB.png", "textures/TX_GrassClumps_01_NH.png");
 	grass.init(&core, "models/Grass_Clump_01c.gem", grassInstances);
 
 	AnimationManager animationManager;
@@ -108,6 +106,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 
 	animationManager.set("TRex", AnimationName::Idle, "idle");
 	animationManager.set("TRex", AnimationName::Attack, "attack");
+	animationManager.set("TRex", AnimationName::Death,  "death");
 
 	Gun gun;
 	gun.init(&gunModel, animationManager);
@@ -115,11 +114,14 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 	Matrix enemyW = Matrix::scale(Vec3(0.01f, 0.01f, 0.01f)) * Matrix::translate(Vec3(10, 0, 0));
 	enemyManager.spawn(&enemyModel, enemyW, animationManager);
 
-	Plane plane(&shaderManager);
-	plane.init(&core);
+	Plane floor(&shaderManager, &tex, "textures/wood_chip_path_diff_4k.png", "textures/wood_chip_path_nor_dx_4k.png");
+	floor.init(&core);
 
-	Sphere sphere(&shaderManager, &tex, "textures/kloofendal_48d_partly_cloudy_puresky.jpg");
-	sphere.init(&core);
+	Sphere skybox(&shaderManager, &tex, "textures/kloofendal_48d_partly_cloudy_puresky.jpg");
+	skybox.init(&core, 1000.f);
+
+	BoundingSphere playerBounds;
+	playerBounds.radius = 0.5;
 
 	float fov = 90.0f;
 	float n = 0.01f;
@@ -193,6 +195,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 			cam.pos += move * cam.moveSpeed * dt;
 		}
 		cam.pos.y = 3.5;
+		playerBounds.centre = cam.pos;
 
 		Matrix v = cam.viewMatrix();
 		Matrix camWorld = v.invert();
@@ -215,9 +218,11 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 
 		grass.draw(&core, vp);
 
-		//plane.draw(&core, W, vp);
+		//floor.draw(&core, W, vp);
+		skybox.draw(&core, W, vp);
 
-		sphere.draw(&core, W, vp);
+		W = Matrix::scale(Vec3(0.05, 0.05, 0.05));
+		bananaTree.draw(&core, W, vp);
 
 		core.finishFrame();
 	}

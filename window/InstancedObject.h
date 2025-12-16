@@ -31,11 +31,10 @@ public:
 
 	void draw(Core* core, Texture* texture, ShaderManager* shaderManager) {
 		for (int i = 0; i < meshes.size(); i++) {
-			shaderManager->updateTexturePS(core, "tex", texture->heapOffset);
+			shaderManager->updateTexturePS(core, "diffuseTex", texture->heapOffset);
 			meshes[i]->draw(core);
 		}
 	}
-
 };
 
 class InstancedObject {
@@ -47,10 +46,13 @@ public:
 	Shader* pixelShader = nullptr;
 	InstancedStaticMesh sm;
 	TextureManager* textureManager;
-	Texture* texture = nullptr;
+	Texture* diffuseTex = nullptr;
+	Texture* normalTex = nullptr;
 	std::string filepath;
+	std::string filepath2;
 
-	InstancedObject(ShaderManager* shadermanager, TextureManager* tx, std::string _filepath) : shaderManager(shadermanager), textureManager(tx), filepath(_filepath) {}
+	InstancedObject(ShaderManager* shadermanager, TextureManager* tx, std::string _filepath, std::string _filepath2) : shaderManager(shadermanager), 
+		textureManager(tx), filepath(_filepath), filepath2(_filepath2) {}
 
 	void init(Core* core, std::string filename, std::vector<INSTANCE>& instances) {
 		sm.setInstances(instances);
@@ -58,7 +60,8 @@ public:
 
 		vertexShader = shaderManager->loadShader(core, "vertexshader_instanced.hlsl", true);
 		pixelShader = shaderManager->loadShader(core, "pixelshader_alphatesting.hlsl", false);
-		texture = textureManager->loadTexture(core, filepath);
+		diffuseTex = textureManager->loadTexture(core, filepath);
+		//normalTex = textureManager->loadTexture(core, filepath2);
 		psos.createPSO(core, "InstancedGEM", vertexShader->shader, pixelShader->shader, vertexLayoutCache.getInstancedLayout());
 	}
 
@@ -66,6 +69,6 @@ public:
 		psos.bind(core, "InstancedGEM");
 		shaderManager->updateConstantVS("vertexshader_instanced.hlsl", "staticMeshBuffer", "VP", &VP);
 		vertexShader->apply(core);
-		sm.draw(core, texture, shaderManager);
+		sm.draw(core, diffuseTex, shaderManager);
 	}
 };

@@ -124,13 +124,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="AlphaTested.h" />
     <ClInclude Include="AnimatedModel.h" />
     <ClInclude Include="Animation.h" />
     <ClInclude Include="AnimationManager.h" />
-    <ClInclude Include="Animation_fixed.h" />
     <ClInclude Include="Barrier.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="collision.h" />
     <ClInclude Include="ConstantBuffer.h" />
     <ClInclude Include="core.h" />
     <ClInclude Include="Cube.h" />

@@ -105,7 +105,7 @@ public:
 	void updateConstantPS(const std::string& filename, const std::string& cbufferName, const std::string& varName, const void* data) {
 		auto it = shaders.find(filename);
 		if (it == shaders.end()) return;
-
+		
 		Shader& sh = it->second;
 		if (sh.isVertexShader) return;
 		if (!sh.buffer) return;
@@ -113,10 +113,10 @@ public:
 		sh.buffer->update(varName, (void*)data);
 	}
 
-	void updateTexturePS(Core* core, std::string name, int heapOffset) {
-		UINT bindPoint = textureBindPoints[name];
-		D3D12_GPU_DESCRIPTOR_HANDLE handle = core->srvHeap.gpuHandle;
-		handle.ptr = handle.ptr + (UINT64)(heapOffset - bindPoint) * (UINT64)core->srvHeap.incrementSize;
-		core->getCommandList()->SetGraphicsRootDescriptorTable(2, handle);
-	}
+		void updateTexturePS(Core* core, std::string name, int heapOffset) {
+			UINT bindPoint = textureBindPoints[name];
+			D3D12_GPU_DESCRIPTOR_HANDLE handle = core->srvHeap.gpuHandle;
+			handle.ptr = handle.ptr + (UINT64)(heapOffset - bindPoint) * (UINT64)core->srvHeap.incrementSize;
+			core->getCommandList()->SetGraphicsRootDescriptorTable(2, handle);
+		}
 };

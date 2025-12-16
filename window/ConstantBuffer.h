@@ -62,7 +62,6 @@ public:
 		memcpy(&buffer[offset + cbVariable.offset], data, cbVariable.size);
 	}
 
-
 	D3D12_GPU_VIRTUAL_ADDRESS getGPUAddress() const {
 		return (constantBuffer->GetGPUVirtualAddress() + (offsetIndex * cbSizeInBytes));
 	}
