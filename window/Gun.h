@@ -9,8 +9,8 @@ public:
 	std::string name = "AutomaticCarbine";
 	std::string actionName;
 
-	int bullets = 25;
-	int bulletCount = 25;
+	int bullets = 10;
+	int bulletCount = 10;
 
 	bool reloading = false;
 	float reloadTime = 0.f;
@@ -21,8 +21,14 @@ public:
 	float fireRate = 5.f;
 	float shotCooldown = 0.f;
 
+	bool firedThisFrame = false;
+
+	int health = 100;
+	int damage = 5;
+	bool isAlive = true;
+
 	void onTriggerPressed() { triggerPressed = true;  triggerPressedThisFrame = true; }
-	void onTriggerReleased() { triggerPressed = false; }
+	void onTriggerReleased() { triggerPressed = false; triggerPressedThisFrame = false; }
 
 	void init(AnimatedModel* m, AnimationManager& animationManager) {
 		model = m;
@@ -50,6 +56,7 @@ public:
 	}
 
 	void update(float dt, AnimationManager& animationManager) {
+		firedThisFrame = false;
 		if (!actionName.empty())
 			anim.update(actionName, dt);
 
@@ -69,6 +76,7 @@ public:
 			}
 
 			triggerPressedThisFrame = false;
+			firedThisFrame = false;
 			return;
 		}
 
@@ -95,7 +103,15 @@ public:
 		}
 		bullets--;
 		shotCooldown = 1.f / fireRate;
+		firedThisFrame = true;
 		play(animationManager, AnimationName::Attack, true, false);
+	}
+
+	void takeDamage(int damage) {
+		health -= damage;
+		if (health <= 0) {
+			isAlive = false;
+		}
 	}
 
 	void play(AnimationManager& animationManager, AnimationName action, bool restart, bool loop) {

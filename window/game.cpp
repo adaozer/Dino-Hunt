@@ -41,9 +41,7 @@ static void sampleDisk(float R, float& outX, float& outZ) {
 	outZ = sinf(a) * r;
 }
 // instancing, animation manager, enemy, gun
-// collision thingy
-//skybox sphere bound thingy
-
+// collision 
 
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nCmdShow) {
 	Window win;
@@ -88,6 +86,30 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 		treeInstances.push_back(inst);
 	}
 
+	std::vector<AABB> treeAABBs;
+	treeAABBs.reserve(TREE_COUNT);
+
+	AABB localTree;
+	localTree.min = Vec3(-50.f, 0.f, -50.f);
+	localTree.max = Vec3(50.f, 200.f, 50.f);
+	for (int i = 0; i < TREE_COUNT; i++) {
+		AABB w;
+		Vec3 c[8] = {
+		Vec3(localTree.min.x, localTree.min.y, localTree.min.z),
+		Vec3(localTree.max.x, localTree.min.y, localTree.min.z),
+		Vec3(localTree.min.x, localTree.max.y, localTree.min.z),
+		Vec3(localTree.max.x, localTree.max.y, localTree.min.z),
+		Vec3(localTree.min.x, localTree.min.y, localTree.max.z),
+		Vec3(localTree.max.x, localTree.min.y, localTree.max.z),
+		Vec3(localTree.min.x, localTree.max.y, localTree.max.z),
+		Vec3(localTree.max.x, localTree.max.y, localTree.max.z)
+		};
+		for (int k = 0; k < 8; k++) {
+			Vec4 r = treeInstances[i].W.mulPoint(Vec4(c[k]));
+			w.extend(Vec3(r.x, r.y, r.z));
+		}
+		treeAABBs.push_back(w);
+	}
 	InstancedObject bamboo(&shaderManager, &tex, "textures/bamboo branch_ALB.png", "textures/bamboo branch_NH.png", "pixelshader_normalmapped.hlsl");
 	bamboo.init(&core, "models/bamboo.gem", treeInstances);
 
@@ -120,13 +142,13 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 	animationManager.set("AutomaticCarbine", AnimationName::Inspect, "05 inspect");
 
 	animationManager.set("TRex", AnimationName::Idle, "idle");
+	animationManager.set("TRex", AnimationName::Run, "run");
 	animationManager.set("TRex", AnimationName::Attack, "attack");
 	animationManager.set("TRex", AnimationName::Death,  "death");
 
 	Gun gun;
 	gun.init(&gunModel, animationManager);
 	
-	enemyManager.spawn(&enemyModel, animationManager);
 	BoundingSphere enemyBounds;
 	enemyBounds.radius = 4.f;
 
@@ -135,7 +157,12 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 
 	Sphere skybox(&shaderManager, &tex, "textures/kloofendal_48d_partly_cloudy_puresky.jpg");
 	skybox.init(&core, 1000.f);
-
+	const int ENEMY_COUNT = 6;
+	for (int i = 0; i < ENEMY_COUNT; i++) {
+		float x, z;
+		sampleDisk(200.0f, x, z);
+		enemyManager.spawn(&enemyModel, animationManager, Vec3(x, 0.0f, z));
+	}
 	BoundingSphere playerBounds;
 	playerBounds.radius = 0.5;
 
@@ -146,7 +173,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 	Matrix p = Matrix::projMatrix(aspect, fov, f, n);
 	Camera cam;
 	float time = 0.f;
-
+	playerBounds.centre = cam.pos;
 	bool lastMouseDown = false;
 	bool centered = false;
 	bool lastZPress = false;
@@ -198,7 +225,6 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 		Vec3 right = Vec3(-std::sin(yaw), 0.0f, std::cos(yaw));
 		Vec3 enemyLoc(10, 0, 0);
 		enemyBounds.centre = enemyLoc;
-		playerBounds.centre = cam.pos;
 		Vec3 move(0.f, 0.f, 0.f);
 		if (win.keys['W']) move += forward;
 		if (win.keys['A']) move += right;
@@ -214,46 +240,19 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 
 		BoundingSphere candidate = playerBounds;
 		candidate.centre = cam.pos + desiredStep;
-		if (!intersectsXZ(candidate, enemyBounds))
-		{
-			cam.pos = candidate.centre;
-		}
-		else
-		{
-			Vec3 toPlayer = candidate.centre - enemyBounds.centre;
-			toPlayer.y = 0.0f;
+		candidate.centre.y = 3.5;
+		bool hitTree = false;
 
-			float dist2 = toPlayer.lengthSquare();
-			if (dist2 > 1e-8f)
-			{
-				float dist = sqrtf(dist2);
-				Vec3 nrm = toPlayer * (1.0f / dist);
-
-				float minDist = playerBounds.radius + enemyBounds.radius;
-
-				float penetration = minDist - dist;
-				candidate.centre += nrm * penetration;
-
-				Vec3 stepXZ = desiredStep;
-				stepXZ.y = 0.0f;
-
-				float into = stepXZ.Dot(stepXZ, nrm);
-				Vec3 slideStep = stepXZ - nrm * into;
-
-				BoundingSphere slid = playerBounds;
-				slid.centre = candidate.centre + slideStep;
-
-				if (!intersectsXZ(slid, enemyBounds))
-				{
-					cam.pos = slid.centre;
-				}
-				else
-				{
-					cam.pos = candidate.centre;
-				}
+		for (const AABB& aabb : treeAABBs) {
+			if (sphereAABB_intersect(candidate, aabb)) {
+				hitTree = true;
+				break;
 			}
 		}
-
+		bool hitEnemy = intersectsXZ(candidate, enemyBounds);
+		if (!hitTree && !hitEnemy) {
+			cam.pos = candidate.centre;
+		}
 		cam.pos.y = 3.5f;
 		playerBounds.centre = cam.pos;
 
@@ -275,13 +274,40 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 		Matrix gunW = local * camWorld;
 		
 		gun.update(dt, animationManager);
-		enemyManager.update(dt, animationManager);
+		enemyManager.update(dt, animationManager, gun, cam);
+		if (gun.firedThisFrame)
+		{
+			Ray ray;
+			ray.init(cam.pos, cam.front()); 
+
+			float bestT = FLT_MAX;
+
+			int hitEnemyIndex = -1;
+			for (int i = 0; i < (int)enemyManager.enemies.size(); i++)
+			{
+				BoundingSphere s;
+				s.centre = enemyLoc;
+				s.centre.y = 7.5f;
+				s.radius = 10.f;
+
+				float t;
+				if (raySphereIntersect(ray, s, t) && t < bestT)
+				{
+					bestT = t;
+					hitEnemyIndex = i;
+				}
+			}
+			if (hitEnemyIndex != -1)
+			{
+				enemyManager.enemies[hitEnemyIndex].takeDamage(gun.damage, animationManager);
+			}
+
+		}
 
 		core.beginRenderPass();
 
 		gun.draw(&core, gunW, vp);
-		Matrix enemyW = Matrix::scale(Vec3(0.01f, 0.01f, 0.01f)) * Matrix::translate(enemyLoc);
-		enemyManager.draw(&core, enemyW, vp);
+		enemyManager.draw(&core, vp);
 
 		bamboo.draw(&core, vp);
 		Matrix W;
@@ -293,7 +319,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nC
 
 		W = Matrix::scale(Vec3(0.05, 0.05, 0.05));
 		bananaTree.draw(&core, W, vp);
-
+		if (!gun.isAlive) return 0;
 		core.finishFrame();
 	}
 	core.flushGraphicsQueue();

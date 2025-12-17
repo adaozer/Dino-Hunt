@@ -7,7 +7,8 @@ enum class AnimationName {
 	Attack,
 	Reload,
 	Death,
-	Inspect
+	Inspect,
+	Run
 };
 
 class AnimationManager {
